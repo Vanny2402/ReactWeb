@@ -8,13 +8,14 @@ export default function CustomerList() {
     { id: 2, name: "Sokha", phone: "098765432", debt: 0.0 },
   ];
 
+  
   return (
     <div className="p-4 mb-16">
-      <h1 className="text-xl font-bold mb-4">Customers</h1>
+      <h1 className="text-xl font-bold mb-4">អតិថិជន</h1>
 
       <input
         type="text"
-        placeholder="Search customer..."
+        placeholder="ស្វែងរក..."
         className="w-full border rounded-xl px-4 py-2 mb-4 shadow-sm"
       />
 
