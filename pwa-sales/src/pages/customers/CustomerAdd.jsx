@@ -64,8 +64,7 @@ export default function CustomerAdd() {
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-xl disabled:opacity-50"
-          disabled={loading} 
-        >
+          disabled={loading}>
           {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
         </button>
       </form>
