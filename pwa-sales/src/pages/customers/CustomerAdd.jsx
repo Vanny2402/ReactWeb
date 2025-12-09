@@ -7,10 +7,12 @@ export default function CustomerAdd() {
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState(""); // ✅ added state for address
+  const [address, setAddress] = useState(""); 
+  const [loading, setLoading] = useState(false); // 👈 loading state
 
   async function handleSave(e) {
     e.preventDefault();
+    setLoading(true); // 👈 start loading
 
     try {
       await createCustomer({
@@ -23,6 +25,8 @@ export default function CustomerAdd() {
     } catch (err) {
       console.error(err);
       alert("មិនអាចបញ្ចូលអតិថិជនបានទេ!");
+    } finally {
+      setLoading(false); // 👈 stop loading
     }
   }
 
@@ -57,8 +61,12 @@ export default function CustomerAdd() {
           onChange={(e) => setAddress(e.target.value)}
         />
 
-        <button className="w-full bg-blue-600 text-white py-3 rounded-xl">
-          រក្សាទុក
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-3 rounded-xl disabled:opacity-50"
+          disabled={loading} 
+        >
+          {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
         </button>
       </form>
     </div>
