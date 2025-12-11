@@ -3,20 +3,20 @@ import { FiPlus } from "react-icons/fi";
 import { Link } from "react-router-dom";
 
 export default function CustomerList() {
-  const [customers, setCustomers] = useState([]);   // 👈 state for data
-  const [loading, setLoading] = useState(true);     // 👈 state for loading
-  const [error, setError] = useState(null);         // 👈 state for error
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     async function fetchCustomers() {
       try {
         setLoading(true);
         const res = await fetch("https://myinvoice-f70e.onrender.com/api/customers");
-        if (!res.ok) {
-          throw new Error("Failed to fetch customers");
-        }
+        if (!res.ok) throw new Error("Failed to fetch customers");
+
         const data = await res.json();
-        setCustomers(data); // 👈 backend should return array of customers
+        setCustomers(data);
       } catch (err) {
         console.error(err);
         setError("មិនអាចទាញយកអតិថិជនបានទេ!");
@@ -28,21 +28,30 @@ export default function CustomerList() {
     fetchCustomers();
   }, []);
 
+  // ✅ Filter customers by name or phone
+  const filteredCustomers = customers.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone.includes(search)
+  );
+
   return (
     <div className="p-4 mb-16">
-      <h1 className="text-xl font-bold mb-4">អតិថិជន</h1>
 
-      <input
-        type="text"
-        placeholder="ស្វែងរក..."
-        className="w-full border rounded-xl px-4 py-2 mb-4 shadow-sm"
-      />
+      <div className="flex justify-center mb-6">
+        <input
+          type="text"
+          placeholder="ស្វែងរកតាមឈ្មោះអតិថិជន..."
+          className="w-full md:w-1/2 border px-4 py-2 rounded-xl shadow-sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       {loading && <p>កំពុងទាញយក...</p>}
       {error && <p className="text-red-600">{error}</p>}
 
       <div className="space-y-3">
-        {customers.map((c) => (
+        {filteredCustomers.map((c) => (
           <Link
             key={c.id}
             to={`/customers/${c.id}`}
@@ -61,6 +70,11 @@ export default function CustomerList() {
             </p>
           </Link>
         ))}
+
+        {/* ✅ Show message when no results */}
+        {!loading && filteredCustomers.length === 0 && (
+          <p className="text-center text-gray-500">រកមិនឃើញអតិថិជន</p>
+        )}
       </div>
 
       <Link
