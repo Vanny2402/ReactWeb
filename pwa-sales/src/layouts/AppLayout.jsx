@@ -7,7 +7,7 @@ export default function AppLayout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
 
-  // Auto title from path
+  // ✅ Default title from path map
   const pageTitleMap = {
     "/": "Dashboard",
     "/customers": "អតិថិជន",
@@ -19,7 +19,17 @@ export default function AppLayout({ children }) {
     "/settings": "ការកំណត់",
   };
 
-  const title = pageTitleMap[pathname] || "Invoice App";
+  let title = pageTitleMap[pathname] || "Invoice App";
+
+  // ✅ Dynamic title for edit page
+  if (pathname.startsWith("/products/edit")) {
+    title = "កែប្រែទំនិញ"; // or "Product Modify"
+  }
+
+    if (pathname.startsWith("/customers/edit")) {
+    title = "កែប្រែអតិថិជន"; // or "Customer modify"
+  }
+
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">

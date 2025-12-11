@@ -46,12 +46,10 @@ export default function CustomerEdit() {
       });
   };
 
-  if (loading) return <p className="p-4">Loading...</p>;
+  if (loading) return <p className="text-gray-600 text-center">កំពុងផ្ទុក...</p>;
 
   return (
     <div className="p-4 pb-24">
-      <h2 className="text-xl font-semibold mb-4">Edit Customer</h2>
-
       <div className="space-y-3">
         <input
           className="w-full border p-2 rounded"

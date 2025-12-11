@@ -12,6 +12,7 @@ import CustomerEdit from "./pages/customers/CustomerEdit";
 
 import ProductList from "./pages/products/ProductList";
 import ProductAdd from "./pages/products/ProductAdd";
+import ProductEdit from "./pages/products/ProductEdit";
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
           {/* Products */}
           <Route path="/products" element={<ProductList />} />
           <Route path="/products/add" element={<ProductAdd />} />
+          <Route path="/products/edit/:id" element={<ProductEdit />} />
 
           {/* Others */}
           <Route path="/sales" element={<Sales />} />
