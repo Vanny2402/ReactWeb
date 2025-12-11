@@ -1,0 +1,143 @@
+/* Pages/sales/SaleReport/saleReport.module.css */
+
+.reportPage {
+  padding: 12px;
+  font-family: system-ui, "Noto Sans Khmer", sans-serif;
+  color: #222;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbar button {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.toolbar button:hover {
+  background: #eaeaea;
+}
+
+.error {
+  color: #c00;
+  margin: 8px 0;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Day group card */
+.dayCard {
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fff;
+}
+
+.dayHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.dayTitle {
+  font-size: 1rem;
+}
+
+.dayTotal {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.salesList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Sale row */
+.saleRow {
+  padding: 8px 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.saleTop {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.order {
+  color: #333;
+}
+
+.amount {
+  color: #111;
+}
+
+.saleMeta {
+  color: #666;
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.items {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 8px;
+  margin-top: 6px;
+}
+
+.item .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item .price {
+  text-align: right;
+  color: #333;
+}
+
+.item .qty {
+  text-align: right;
+  color: #555;
+}
+
+.note {
+  color: #444;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.items {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 4px 8px;
+  margin-top: 6px;
+  font-family: "Noto Sans Khmer", system-ui, sans-serif;
+}
+
+.item .name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

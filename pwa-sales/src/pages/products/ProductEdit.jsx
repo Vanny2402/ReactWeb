@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById, updateProduct } from "../../api/productApi";
-import { FiArrowLeft } from "react-icons/fi";
 
 export default function ProductModify() {
   const { id } = useParams();
@@ -13,7 +12,9 @@ export default function ProductModify() {
     productType: "",
     stock: "",
     remark: "",
-  });
+    productColor: "",
+    purchasePrice: "",
+  })
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,72 +62,119 @@ export default function ProductModify() {
   if (loading) return <p className="text-gray-600 text-center">កំពុងផ្ទុក...</p>;
 
   return (
-    <div className="p-4 pb-24">
+    <div className="p-4 max-w-lg mx-auto">
       {/* ✅ Form Fields */}
       <div className="space-y-3">
-        <input
-          className="w-full border p-2 rounded"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="ឈ្មោះផលិតផល"
-        />
+        {/* Reusable row style: label left, input right */}
+        <div className="flex items-center gap-3">
+          <label htmlFor="name" className="w-32 text-sm font-medium">ឈ្មោះ</label>
+          <input
+            id="name"
+            className="flex-1 border rounded px-3 py-2"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="ឈ្មោះផលិតផល"
+          />
+        </div>
 
-        <input
-          className="w-full border p-2 rounded"
-          name="price"
-          value={form.price}
-          onChange={handleChange}
-          placeholder="តម្លៃលក់"
-          type="number"
-        />
+        <div className="flex items-center gap-3">
+          <label htmlFor="price" className="w-32 text-sm font-medium">តម្លៃលក់</label>
+          <input
+            id="price"
+            className="flex-1 border rounded px-3 py-2"
+            name="price"
+            value={form.price}
+            onChange={handleChange}
+            placeholder="តម្លៃលក់"
+            type="number"
+          />
+        </div>
 
-        <select
-          className="w-full border px-4 py-3 rounded-xl"
-          name="productType"
-          value={form.productType}
-          onChange={handleChange}
-          required
-        >
-          <option value="">-- ជ្រើសរើសប្រភេទ --</option>
-          <option value="ឡេ">ឡេ</option>
-          <option value="សាប៊ួ">សាប៊ួ</option>
-          <option value="ហ្វូម">ហ្វូម</option>
-          <option value="ម្សៅ">ម្សៅ</option>
-          <option value="ម៉ាស">ម៉ាស</option>
-          <option value="ផ្សេងៗ">ផ្សេងៗ</option>
-        </select>
+        <div className="flex items-center gap-3">
+          <label htmlFor="productType" className="w-32 text-sm font-medium">ប្រភេទ</label>
+          <select
+            id="productType"
+            className="flex-1 border rounded px-3 py-2"
+            name="productType"
+            value={form.productType}
+            onChange={handleChange}
+            required
+          >
+            <option value="">-- ជ្រើសរើស --</option>
+            <option value="ឡេ">ឡេ</option>
+            <option value="សាប៊ួ">សាប៊ួ</option>
+            <option value="ហ្វូម">ហ្វូម</option>
+            <option value="ម្សៅ">ម្សៅ</option>
+            <option value="ម៉ាស">ម៉ាស</option>
+            <option value="ផ្សេងៗ">ផ្សេងៗ</option>
+          </select>
+        </div>
 
-        <input
-          className="w-full border p-2 rounded"
-          name="stock"
-          value={form.stock}
-          onChange={handleChange}
-          placeholder="ចំនួនស្តុក"
-          type="number"
-        />
+        <div className="flex items-center gap-3">
+          <label htmlFor="productColor" className="w-32 text-sm font-medium">ពណ៌</label>
+          <input
+            id="productColor"
+            className="flex-1 border rounded px-3 py-2"
+            name="productColor"
+            value={form.productColor}
+            onChange={handleChange}
+            placeholder="ពណ៌"
+            type="text"
+          />
+        </div>
 
-        <input
-          className="w-full border p-2 rounded"
-          name="remark"
-          value={form.remark}
-          onChange={handleChange}
-          placeholder="ចាំណាំ"
-        />
+        <div className="flex items-center gap-3">
+          <label htmlFor="purchasePrice" className="w-32 text-sm font-medium">តម្លៃទិញចូល</label>
+          <input
+            id="purchasePrice"
+            className="flex-1 border rounded px-3 py-2"
+            name="purchasePrice"
+            value={form.purchasePrice}
+            onChange={handleChange}
+            placeholder="តម្លៃទិញចូល"
+            type="number"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label htmlFor="stock" className="w-32 text-sm font-medium">ស្តុក</label>
+          <input
+            id="stock"
+            className="flex-1 border rounded px-3 py-2"
+            name="stock"
+            value={form.stock}
+            onChange={handleChange}
+            placeholder="ចំនួនស្តុក"
+            type="number"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label htmlFor="remark" className="w-32 text-sm font-medium">ចំណាំ</label>
+          <input
+            id="remark"
+            className="flex-1 border rounded px-3 py-2"
+            name="remark"
+            value={form.remark}
+            onChange={handleChange}
+            placeholder="ចំណាំ"
+          />
+        </div>
       </div>
 
-      {/* ✅ Split Back & Save Buttons */}
+      {/* ✅ Buttons */}
       <div className="mt-6 flex gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="flex-1 bg-gray-300 text-gray-800 py-2 rounded-lg hover:bg-gray-400 transition"
+          className="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition"
         >
           ថយក្រោយ
         </button>
         <button
           onClick={handleSave}
           disabled={saving}
-          className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+          className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
         >
           {saving ? "កំពុងផ្ទុក..." : "រក្សាទុក"}
         </button>

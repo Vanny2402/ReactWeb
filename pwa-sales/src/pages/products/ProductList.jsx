@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FiPlus, FiEdit } from "react-icons/fi";
-import { getAllProducts } from "../../api/productApi";
+// import { getAllProducts } from "../../api/productApi";
+import { getAllProducts } from "../../api/productApi.js";
+
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
@@ -17,6 +19,7 @@ export default function ProductList() {
   async function fetchProducts() {
     try {
       const res = await getAllProducts();
+      
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -27,16 +30,17 @@ export default function ProductList() {
   }
 
   // Separate handlers for Modify1 and Modify2
-  function handleModify1(id) {
+  function handlePurchas(id) {
     nav(`/products/edit/${id}?mode=1`);
   }
 
-  function handleModify2(id) {
-    nav(`/products/edit/${id}?mode=2`);
-  }
+  function handleSale(id) {
+  nav(`/sales/ProductSale/${id}`); 
+ }
 
   const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+    (p.name || "").toLowerCase().includes(search.toLowerCase())
+    // p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -63,8 +67,8 @@ export default function ProductList() {
             <ProductCard
               key={p.id}
               product={p}
-              onModify1={handleModify1}
-              onModify2={handleModify2}
+              Purchase={handlePurchas}
+              Sale={handleSale}
             />
           ))}
         </div>
@@ -82,12 +86,12 @@ export default function ProductList() {
 }
 
 /* 🔹 Extracted ProductCard for clarity */
-function ProductCard({ product, onModify1, onModify2 }) {
+function ProductCard({ product, Purchase, Sale }) {
   return (
     <div className="bg-white shadow-md rounded-xl p-4 hover:shadow-lg transition border relative">
       {/* Edit Icon */}
       <button
-        onClick={() => onModify1(product.id)}
+        onClick={() => Purchase(product.id)}
         className="absolute top-3 right-3 text-blue-600 hover:text-blue-800"
       >
         <FiEdit size={20} />
@@ -95,7 +99,6 @@ function ProductCard({ product, onModify1, onModify2 }) {
 
       {/* Product Name */}
       <h2 className="text-lg font-bold mb-2">{product.name}</h2>
-
       {/* Product Details */}
       <div className="text-sm text-gray-600 space-y-1">
         <p>
@@ -117,19 +120,22 @@ function ProductCard({ product, onModify1, onModify2 }) {
         </p>
       </div>
 
-      {/* ✅ Split Modify Buttons */}
+
+
+          
       <div className="mt-3 flex gap-2">
         <button
-          onClick={() => onModify1(product.id)}
+        
+          onClick={() => Purchase(product.id)}
           className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
         >
-          Modify1
+          ទិញចូល
         </button>
         <button
-          onClick={() => onModify2(product.id)}
+          onClick={() => Sale(product.id)}
           className="flex-1 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition"
         >
-          Modify2
+          លក់
         </button>
       </div>
     </div>

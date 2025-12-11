@@ -1,10 +1,17 @@
 import api from "./api";
 
-export const createCustomer = (data) =>
-  api.post("/customers", data);
+export const createCustomer = (data) => api.post("/customers", data);
+export const getCustomerById = (id) => api.get(`/customers/${id}`);
+export const updateCustomer = (id, data) => api.put(`/customers/${id}`, data);
+export const getAllCustomers = () => api.get("/customers");
+export const removeCustomer = (id) => api.delete(`/customers/${id}`);
 
-export const getCustomerById = (id) =>
-  api.get(`/customers/${id}`);
+const customerApi = {
+  createCustomer,
+  getCustomerById,
+  updateCustomer,
+  getAllCustomers,
+  removeCustomer,
+};
 
-export const updateCustomer = (id, data) =>
-  api.put(`/customers/${id}`, data);
+export default customerApi;

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getCustomerById, updateCustomer } from "../../api/customerApi";
+import { useNavigate, useParams } from "react-router-dom";
+import customerApi from "../../api/customerApi.js";
 
 export default function CustomerEdit() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const nav = useNavigate();
 
   const [form, setForm] = useState({
     name: "",
@@ -12,77 +12,83 @@ export default function CustomerEdit() {
     address: "",
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Load customer when page opens
   useEffect(() => {
-    getCustomerById(id)
-      .then((res) => {
-        setForm(res.data);
-        setLoading(false);
-      })
-      .catch(() => {
-        alert("Failed to load customer");
-        navigate("/customers");
-      });
-  }, [id]);
+    loadCustomer();
+  }, []);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  async function loadCustomer() {
+    try {
+      const res = await customerApi.getById(id);
+      setForm(res.data);
+    } catch (err) {
+      console.error(err);
+      alert("មិនអាចទាញទិន្នន័យអតិថិជនបានទេ!");
+    }
+  }
 
-  const handleSave = () => {
-    setSaving(true);
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
 
-    updateCustomer(id, form)
-      .then(() => {
-        alert("Customer updated!");
-        navigate("/customers");
-      })
-      .catch(() => {
-        alert("Error updating customer");
-        setSaving(false);
-      });
-  };
+  async function handleSave(e) {
+    e.preventDefault();
+    setLoading(true);
 
-  if (loading) return <p className="text-gray-600 text-center">កំពុងផ្ទុក...</p>;
+    try {
+      await customerApi.update(id, form);
+      nav("/customers");
+    } catch (err) {
+      console.error(err);
+      alert("មិនអាចកែប្រែអតិថិជនបានទេ!");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="p-4 pb-24">
-      <div className="space-y-3">
+    <div className="p-4">
+      <h1 className="text-xl font-bold mb-4">កែប្រែអតិថិជន</h1>
+
+      <form className="space-y-3" onSubmit={handleSave}>
         <input
-          className="w-full border p-2 rounded"
+          type="text"
           name="name"
+          placeholder="ឈ្មោះអតិថិជន"
+          className="w-full border px-4 py-3 rounded-xl"
           value={form.name}
           onChange={handleChange}
-          placeholder="Customer name"
+          required
         />
 
         <input
-          className="w-full border p-2 rounded"
+          type="text"
           name="phone"
+          placeholder="លេខទូរស័ព្ទ"
+          className="w-full border px-4 py-3 rounded-xl"
           value={form.phone}
           onChange={handleChange}
-          placeholder="Phone number"
         />
 
         <input
-          className="w-full border p-2 rounded"
+          type="text"
           name="address"
+          placeholder="អាស័យដ្ឋាន"
+          className="w-full border px-4 py-3 rounded-xl"
           value={form.address}
           onChange={handleChange}
-          placeholder="Address"
         />
-      </div>
 
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-4 w-full bg-blue-600 text-white py-2 rounded"
-      >
-        {saving ? "Saving..." : "Save Changes"}
-      </button>
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-3 rounded-xl disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
+        </button>
+      </form>
     </div>
   );
 }

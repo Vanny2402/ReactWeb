@@ -1,32 +1,35 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createCustomer } from "../../api/customerApi";
+import { createCustomer } from "../../api/customerApi.js";
 
 export default function CustomerAdd() {
   const nav = useNavigate();
 
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState(""); 
-  const [loading, setLoading] = useState(false); // 👈 loading state
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    address: "",
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }
 
   async function handleSave(e) {
     e.preventDefault();
-    setLoading(true); // 👈 start loading
+    setLoading(true);
 
     try {
-      await createCustomer({
-        name: name,
-        phone: phone,
-        address: address
-      });
-
-      nav("/customers"); // redirect
+      await createCustomer(form); // ✅ use named export
+      nav("/customers");
     } catch (err) {
       console.error(err);
       alert("មិនអាចបញ្ចូលអតិថិជនបានទេ!");
     } finally {
-      setLoading(false); // 👈 stop loading
+      setLoading(false);
     }
   }
 
@@ -35,36 +38,39 @@ export default function CustomerAdd() {
       <h1 className="text-xl font-bold mb-4">បង្កើតអតិថិជន</h1>
 
       <form className="space-y-3" onSubmit={handleSave}>
-
         <input
           type="text"
+          name="name"
           placeholder="ឈ្មោះអតិថិជន"
           className="w-full border px-4 py-3 rounded-xl"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          value={form.name}
+          onChange={handleChange}
           required
         />
 
         <input
           type="text"
+          name="phone"
           placeholder="លេខទូរស័ព្ទ"
           className="w-full border px-4 py-3 rounded-xl"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          value={form.phone}
+          onChange={handleChange}
         />
 
         <input
           type="text"
+          name="address"
           placeholder="អាស័យដ្ឋាន"
           className="w-full border px-4 py-3 rounded-xl"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          value={form.address}
+          onChange={handleChange}
         />
 
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-3 rounded-xl disabled:opacity-50"
-          disabled={loading}>
+          disabled={loading}
+        >
           {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
         </button>
       </form>

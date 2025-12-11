@@ -1,14 +1,57 @@
+import React from "react";
+import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
+import { useSaleReport } from "../Pages/sales/SaleReport/hooks/useSaleReport";
+import SaleRow from "../Pages/sales/SaleReport/SaleRow";
+
+function Sidebar() {
+  return (
+    <nav>
+      <ul>
+        {/* other links */}
+        <li>
+          <Link to="/sales/report">Sale Report</Link>
+        </li>
+      </ul>
+    </nav>
+  );
+}
 
 export default function Sales() {
-  return (
-    // <MainLayout title="Sales Records">
-    //   <p>Sales list coming soon...</p>
-    // </MainLayout>
+  // Example: fetch last 7 days
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 7);
 
-    <div className="p-4">
-      <h2 className="text-xl font-semibold">Sale Record</h2>
-      <p>Welcome!</p>
-    </div>
+  const { data, loading, error } = useSaleReport(start, end);
+
+  return (
+    <MainLayout title="Sales Records">
+      <Sidebar />
+
+      <section>
+        {loading && <p>Loading sales...</p>}
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+        {!loading && !error && (
+          <ul>
+            {data.map((dayGroup) => (
+              <li key={dayGroup.date}>
+                <div className="dayHeader">
+                  <span>{dayGroup.date}</span>
+                  <span>
+                    ${dayGroup.total.toFixed(2)} (×{dayGroup.count})
+                  </span>
+                </div>
+                <ul>
+                  {dayGroup.sales.map((sale) => (
+                    <SaleRow key={sale.orderNo} sale={sale} />
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </MainLayout>
   );
 }
