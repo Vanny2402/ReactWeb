@@ -4,6 +4,7 @@ import SaleRow from "./SaleRow";
 import { fmtCurrency } from "./formatters";
 import styles from "./saleReport.module.css";
 
+
 type Props = {
   group: DayGroup;
 };
