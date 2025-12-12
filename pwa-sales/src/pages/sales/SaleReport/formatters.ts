@@ -1,22 +1,11 @@
 // Pages/sales/SaleReport/utils/formatters.ts
 import { Sale, DayGroup } from "./types";
-
-/**
- * Format a number as currency (USD by default).
- * You can swap 'USD' with your local currency code if needed.
- */
 export const fmtCurrency = (n: number) =>
   new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(n);
-
-/**
- * Format an ISO date string into a human-readable time (e.g., "9:44 AM").
- */
 export const fmtTime = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
-/**
- * Group sales by calendar day, summing totals and quantities.
- */
+
 export function groupByDay(sales: Sale[]): DayGroup[] {
   const byDay = new Map<string, DayGroup>();
 

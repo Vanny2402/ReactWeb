@@ -7,12 +7,13 @@ export type SaleItem = {
 };
 
 export type Sale = {
-  orderNo: string;      // from id (convert to string)
-  dateTime: string;     // from createdAt
-  paymentMethod: string; // optional, hardcode or map later
-  totalAmount: number;  // from totalPrice
-  note?: string;        // from remark
+  orderNo: string;
+  dateTime: string;
+  paymentMethod: string;
+  totalAmount: number;
+  note?: string;
   items: SaleItem[];
+  customerName?: string; // <-- add this
 };
 
 export type DayGroup = {

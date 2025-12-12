@@ -4,6 +4,8 @@ import { createSale } from "../../api/saleApi.js";
 import { getAllProducts } from "../../api/productApi.js";
 import { getAllCustomers } from "../../api/customerApi.js";
 import { useParams } from "react-router-dom";
+import moment from "moment-timezone";
+
 
 export default function ProductSale() {
     const { id } = useParams();   // <-- get product id from URL
@@ -22,7 +24,7 @@ export default function ProductSale() {
         totalPrice: ""
 
     });
-    
+
     // ✅ Fetch data once on mount
     useEffect(() => {
         loadData();
@@ -76,6 +78,21 @@ export default function ProductSale() {
             alert("សូមបំពេញទិន្នន័យទាំងអស់!");
             return;
         }
+        // const saleData = {
+        //     customer: { id: Number(form.customerId) },
+        //     remark: form.remark,
+        //     items: [
+        //         {
+        //             product: { id: Number(form.productId) },
+        //             qty: Number(form.qty),
+        //             price: Number(form.price),
+        //         },
+        //     ],
+        //     paidAmount: Number(form.paidAmount),   // ✅ include it
+        //     totalPrice: Number(form.qty || 0) * Number(form.price || 0), // optional
+        //     debt: Number(form.qty || 0) * Number(form.price || 0) - Number(form.paidAmount || 0) // optional
+        // };
+
         const saleData = {
             customer: { id: Number(form.customerId) },
             remark: form.remark,
@@ -86,10 +103,18 @@ export default function ProductSale() {
                     price: Number(form.price),
                 },
             ],
-            paidAmount: Number(form.paidAmount),   // ✅ include it
-            totalPrice: Number(form.qty || 0) * Number(form.price || 0), // optional
-            debt: Number(form.qty || 0) * Number(form.price || 0) - Number(form.paidAmount || 0) // optional
+            paidAmount: Number(form.paidAmount),
+            totalPrice: Number(form.qty || 0) * Number(form.price || 0),
+            debt:
+                Number(form.qty || 0) * Number(form.price || 0) -
+                Number(form.paidAmount || 0),
+
+            // ✅ Option 4: Save directly in Cambodia time
+            saleTime: moment().tz("Asia/Phnom_Penh").format()
+            // Example: "2025-12-12T10:30:00+07:00"
         };
+
+
         setSaving(true);
         try {
             await createSale(saleData);

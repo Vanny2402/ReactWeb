@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import { useSaleReport } from "../Pages/sales/SaleReport/hooks/useSaleReport";
 import SaleRow from "../Pages/sales/SaleReport/SaleRow";
+// import useSaleReport from "./sales/SaleReport/hooks/useSaleReport";
 
 function Sidebar() {
   return (
@@ -35,11 +36,11 @@ export default function Sales() {
         {!loading && !error && (
           <ul>
             {data.map((dayGroup) => (
-              <li key={dayGroup.date}>
+              <li key={dayGroup.dateLabel}>
                 <div className="dayHeader">
-                  <span>{dayGroup.date}</span>
+                  <span>{dayGroup.dateLabel}</span>
                   <span>
-                    ${dayGroup.total.toFixed(2)} (×{dayGroup.count})
+                    ${dayGroup.totalAmount.toFixed(2)} (x{dayGroup.totalQty})
                   </span>
                 </div>
                 <ul>

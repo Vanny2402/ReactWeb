@@ -38,6 +38,7 @@ export function useSaleReport(start: Date, end: Date) {
             unitPrice: it.price,
             qty: it.qty,
           })),
+          customerName: s.customer?.name ?? "Guest", // <-- map from backend
         }));
 
         setData(groupByDay(sales));
