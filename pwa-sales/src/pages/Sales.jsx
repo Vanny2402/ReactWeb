@@ -2,8 +2,8 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
-import { useSaleReport } from "./sales/saleReport/hooks/useSaleReport";
-import SaleRow from "./sales/saleReport/SaleRow";
+import { useSaleReport } from "./sales/SaleReport/hooks/useSaleReport";
+import SaleRow from "./sales/SaleReport/SaleRow";
 
 function Sidebar() {
   return (
