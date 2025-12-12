@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Sale, DayGroup } from "../types";
 import { groupByDay } from "../formatters";
-
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+import api from "../../../../api/api"   // ✅ your axios instance
 
 export function useSaleReport(start: Date, end: Date) {
   const [data, setData] = useState<DayGroup[]>([]);
@@ -22,10 +21,9 @@ export function useSaleReport(start: Date, end: Date) {
           size: "50",
         });
 
-        const response = await fetch(`${API_BASE}/api/sales?${qs}`);
-        if (!response.ok) throw new Error("Failed to fetch sales data");
-
-        const raw: any[] = await response.json();
+        // ✅ use axios instance instead of fetch
+        const response = await api.get(`/sales?${qs}`);
+        const raw: any[] = response.data;
 
         const sales: Sale[] = raw.map((s) => ({
           orderNo: String(s.id),
@@ -38,7 +36,7 @@ export function useSaleReport(start: Date, end: Date) {
             unitPrice: it.price,
             qty: it.qty,
           })),
-          customerName: s.customer?.name ?? "Guest", // <-- map from backend
+          customerName: s.customer?.name ?? "Guest",
         }));
 
         setData(groupByDay(sales));
