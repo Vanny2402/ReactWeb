@@ -9,9 +9,8 @@ function Sidebar() {
   return (
     <nav>
       <ul>
-        {/* other links */}
         <li>
-          <Link to="/sales/report">Sale Report</Link>
+          <Link to="/sales/report">Sale Reports</Link>
         </li>
       </ul>
     </nav>

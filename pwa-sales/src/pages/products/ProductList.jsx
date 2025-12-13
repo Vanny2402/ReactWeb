@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FiPlus, FiEdit } from "react-icons/fi";
-// import { getAllProducts } from "../../api/productApi";
+import { FiPlus, FiEdit, FiLoader } from "react-icons/fi"; // ✅ added FiLoader
 import { getAllProducts } from "../../api/productApi.js";
-
 
 export default function ProductList() {
   const [products, setProducts] = useState([]);
@@ -19,7 +17,6 @@ export default function ProductList() {
   async function fetchProducts() {
     try {
       const res = await getAllProducts();
-      
       setProducts(res.data);
     } catch (err) {
       console.error(err);
@@ -29,18 +26,16 @@ export default function ProductList() {
     }
   }
 
-  // Separate handlers for Modify1 and Modify2
   function handlePurchas(id) {
     nav(`/products/edit/${id}?mode=1`);
   }
 
   function handleSale(id) {
-  nav(`/sales/ProductSale/${id}`); 
- }
+    nav(`/sales/ProductSale/${id}`);
+  }
 
   const filteredProducts = products.filter((p) =>
     (p.name || "").toLowerCase().includes(search.toLowerCase())
-    // p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -58,8 +53,9 @@ export default function ProductList() {
 
       {/* ✅ Loading State */}
       {loading ? (
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-gray-600">កំពុងផ្ទុក...</p>
+        <div className="flex justify-center items-center py-10 text-gray-600">
+          <FiLoader className="animate-spin mr-2" size={22} />
+          កំពុងផ្ទុក...
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -85,7 +81,6 @@ export default function ProductList() {
   );
 }
 
-/* 🔹 Extracted ProductCard for clarity */
 function ProductCard({ product, Purchase, Sale }) {
   return (
     <div className="bg-white shadow-md rounded-xl p-4 hover:shadow-lg transition border relative">
@@ -99,6 +94,7 @@ function ProductCard({ product, Purchase, Sale }) {
 
       {/* Product Name */}
       <h2 className="text-lg font-bold mb-2">{product.name}</h2>
+
       {/* Product Details */}
       <div className="text-sm text-gray-600 space-y-1">
         <p>
@@ -120,12 +116,9 @@ function ProductCard({ product, Purchase, Sale }) {
         </p>
       </div>
 
-
-
-          
+      {/* Action Buttons */}
       <div className="mt-3 flex gap-2">
         <button
-        
           onClick={() => Purchase(product.id)}
           className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
         >

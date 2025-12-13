@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
-import { FiPlus, FiUsers, FiBox, FiX, FiShoppingBag, FiShoppingCart } from "react-icons/fi";
+import React from "react";
+<Link to="/sales/report">Sale Reports</Link>
+
+import { FiX, FiHome, FiShoppingCart, FiCreditCard, FiSettings } from "react-icons/fi";
 
 export default function SideMenu({ isOpen, onClose }) {
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-      onClick={onClose} // close when clicking outside
+      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+      onClick={onClose}
     >
       <div
         className={`absolute left-0 top-0 h-full w-64 bg-white shadow-lg p-5 transition-transform 
         ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
-        onClick={(e) => e.stopPropagation()} // prevent close when clicking inside box
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold">មីនុយ</h2>
@@ -19,46 +21,36 @@ export default function SideMenu({ isOpen, onClose }) {
         </div>
 
         <nav className="flex flex-col gap-4">
-          {/* <Link 
-            to="/customers/add" 
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose} 
-          >
-            <FiPlus size={18} /> Add Customer
-          </Link>
-
-          <Link 
-            to="/products/add" 
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose}
-          >
-            <FiPlus size={18} /> Add Product
-          </Link> */}
-
           <Link
-            to="/customers"
+            to="/"
             className="flex items-center gap-3 text-gray-700"
             onClick={onClose}
           >
-            <FiUsers size={18} /> អតិថិជន
+            <FiHome size={18} /> ផ្ទាំងខាងដើម
           </Link>
 
           <Link
-            to="/products"
+            to="/sales/report"
             className="flex items-center gap-3 text-gray-700"
             onClick={onClose}
           >
-            <FiBox size={18} /> ផលិតផល
+            <FiShoppingCart size={18} /> ការលក់
           </Link>
 
-
-
           <Link
-            to="/##"
+            to="/payments"
             className="flex items-center gap-3 text-gray-700"
             onClick={onClose}
           >
-            <FiShoppingBag size={18} /> ទិញចូល
+            <FiCreditCard size={18} /> ការបង់ប្រាក់
+          </Link>
+
+          <Link
+            to="/settings"
+            className="flex items-center gap-3 text-gray-700"
+            onClick={onClose}
+          >
+            <FiSettings size={18} /> ការកំណត់
           </Link>
         </nav>
       </div>
