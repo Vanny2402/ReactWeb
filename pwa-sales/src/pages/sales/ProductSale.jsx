@@ -1,51 +1,67 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { createSale } from "../../api/saleApi.js";
-import { getAllProducts } from "../../api/productApi.js";
-import { getAllCustomers } from "../../api/customerApi.js";
 import moment from "moment-timezone";
 import { ShoppingCartIcon } from "@heroicons/react/24/solid";
 
+import { createSale } from "../../api/saleApi";
+import { getAllProducts } from "../../api/productApi";
+import { getAllCustomers } from "../../api/customerApi";
 
 export default function ProductSale() {
     const { id } = useParams();
+    const navigate = useNavigate();
+
+    /* ===================== STATE ===================== */
     const [products, setProducts] = useState([]);
     const [customers, setCustomers] = useState([]);
+    const [cartItems, setCartItems] = useState([]);
+
+    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const navigate = useNavigate();
     const [customerLocked, setCustomerLocked] = useState(false);
+    const [error, setError] = useState(null);
 
-
-    // form for current item
     const [form, setForm] = useState({
         productId: "",
         customerId: "",
         qty: "",
         price: "",
+        paidAmount: "",
         remark: "",
-        paidAmount: ""
     });
 
-    // cart items
-    const [cartItems, setCartItems] = useState([]);
-
+    /* ===================== LOAD DATA ===================== */
     useEffect(() => {
         loadData();
     }, []);
 
-    async function loadData() {
+    const loadData = async () => {
         try {
-            const [productRes, customerRes] = await Promise.all([
+            setLoading(true);
+
+            // API RETURNS res.data (NOT axios response)
+            const [productsData, customersData] = await Promise.all([
                 getAllProducts(),
                 getAllCustomers(),
             ]);
-            setProducts(productRes.data || []);
-            setCustomers(customerRes.data || []);
 
-            if (id) {
-                const selected = productRes.data.find((p) => p.id === Number(id));
+            setProducts(
+                Array.isArray(productsData)
+                    ? productsData
+                    : productsData?.content || productsData?.data || []
+            );
+
+            setCustomers(
+                Array.isArray(customersData)
+                    ? customersData
+                    : customersData?.content || customersData?.data || []
+            );
+
+
+            if (id && productsData?.length) {
+                const selected = productsData.find(p => p.id === Number(id));
                 if (selected) {
-                    setForm((prev) => ({
+                    setForm(prev => ({
                         ...prev,
                         productId: selected.id,
                         price: selected.price,
@@ -53,289 +69,178 @@ export default function ProductSale() {
                 }
             }
         } catch (err) {
-            console.error("Error loading dropdown data", err);
-            alert("មិនអាចទាញទិន្នន័យបានទេ!");
+            console.error(err);
+            setError("មិនអាចទាញទិន្នន័យបានទេ");
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
-    function handleChange(e) {
+    /* ===================== FORM HANDLING ===================== */
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
 
-        if (name === "productId") {
-            const selected = products.find((p) => p.id === Number(value));
-            if (selected) {
-                setForm((prev) => ({ ...prev, price: selected.price }));
+        setForm(prev => {
+            const updated = { ...prev, [name]: value };
+
+            if (name === "productId") {
+                const selected = products.find(p => p.id === Number(value));
+                if (selected) {
+                    updated.price = selected.price;
+                }
             }
-        }
-    }
 
-    // function handleAddToCart() {
-    //     if (!form.productId || !form.qty || !form.price) {
-    //         alert("សូមបំពេញទិន្នន័យផលិតផល!");
-    //         return;
-    //     }
+            return updated;
+        });
+    }, [products]);
 
-    //     const product = products.find((p) => p.id === Number(form.productId));
-    //     const lineTotal = Number(form.qty) * Number(form.price);
-
-    //     setCartItems((prev) => [
-    //         ...prev,
-    //         {
-    //             product: { id: Number(form.productId), name: product?.name },
-    //             qty: Number(form.qty),
-    //             price: Number(form.price),
-    //             lineTotal,
-    //         },
-    //     ]);
-
-    //     // ✅ lock customer once first item is added
-    //     setCustomerLocked(true);
-
-    //     // reset qty for next add
-    //     setForm((prev) => ({ ...prev, qty: "", price: product?.price || "" }));
-    // }
-    // }
-
-    function handleAddToCart() {
-        // Check if customer selected
+    /* ===================== CART ===================== */
+    const handleAddToCart = () => {
         if (!form.customerId) {
             alert("សូមជ្រើសរើសអតិថិជនជាមុន!");
             return;
         }
 
-        // Check product fields
         if (!form.productId || !form.qty || !form.price) {
             alert("សូមបំពេញទិន្នន័យផលិតផល!");
             return;
         }
 
-        const product = products.find((p) => p.id === Number(form.productId));
-        const lineTotal = Number(form.qty) * Number(form.price);
+        const product = products.find(p => p.id === Number(form.productId));
+        if (!product) return;
 
-        setCartItems((prev) => [
+        const qty = Number(form.qty);
+        const price = Number(form.price);
+
+        setCartItems(prev => [
             ...prev,
             {
-                product: { id: Number(form.productId), name: product?.name },
-                qty: Number(form.qty),
-                price: Number(form.price),
-                lineTotal,
-            },
+                product: { id: product.id, name: product.name },
+                qty,
+                price,
+                lineTotal: qty * price,
+            }
         ]);
 
-        // Lock customer after the first item added
         setCustomerLocked(true);
 
-        // Reset qty for next item
-        setForm((prev) => ({ ...prev, qty: "", price: product?.price || "" }));
-    }
+        setForm(prev => ({
+            ...prev,
+            qty: "",
+            price: product.price,
+        }));
+    };
 
-    function handleRemoveFromCart(index) {
-        setCartItems((prev) => prev.filter((_, i) => i !== index));
+    const handleRemoveFromCart = (index) => {
+        setCartItems(prev => {
+            const updated = prev.filter((_, i) => i !== index);
+            if (updated.length === 0) {
+                setCustomerLocked(false);
+            }
+            return updated;
+        });
+    };
 
-        // unlock customer if cart becomes empty
-        if (cartItems.length === 1) {
-            setCustomerLocked(false);
-        }
-    }
-
-
-    async function handleSave() {
+    /* ===================== SAVE ===================== */
+    const handleSave = async () => {
         if (!form.customerId || cartItems.length === 0) {
             alert("សូមជ្រើសរើសអតិថិជន និងបន្ថែមផលិតផល!");
             return;
         }
 
-        const totalPrice = cartItems.reduce((sum, item) => sum + item.lineTotal, 0);
+        const totalPrice = cartItems.reduce((sum, i) => sum + i.lineTotal, 0);
         const paidAmount = Number(form.paidAmount || 0);
-        const debt = totalPrice - paidAmount;
 
         const saleData = {
             customer: { id: Number(form.customerId) },
             remark: form.remark,
-            items: cartItems.map((item) => ({
-                product: { id: item.product.id },
-                qty: item.qty,
-                price: item.price,
+            items: cartItems.map(i => ({
+                product: { id: i.product.id },
+                qty: i.qty,
+                price: i.price,
             })),
-            paidAmount,
             totalPrice,
-            debt,
+            paidAmount,
+            debt: totalPrice - paidAmount,
             saleTime: moment().tz("Asia/Phnom_Penh").format(),
         };
 
-        setSaving(true);
         try {
+            setSaving(true);
             await createSale(saleData);
             alert("ការលក់ត្រូវបានបង្កើតដោយជោគជ័យ!");
             navigate("/sales");
         } catch (err) {
             console.error(err);
-            alert("Error creating sale");
+            alert("បង្កើតការលក់បរាជ័យ");
             setSaving(false);
         }
-    }
+    };
 
-    if (products.length === 0 || customers.length === 0) {
+    /* ===================== RENDER ===================== */
+    if (loading) {
         return <div className="p-4">កំពុងផ្ទុកទិន្នន័យ...</div>;
     }
 
+    if (error) {
+        return <div className="p-4 text-red-600">{error}</div>;
+    }
+
     return (
-        <div className="p-4 max-w-lg mx-auto">
-            <div className="space-y-3">
-                {/* Customer Dropdown */}
-                <div className="flex items-center gap-3">
-                    <label className="w-32 text-sm font-medium">អតិថិជន</label>
-                    <select
-                        name="customerId"
-                        value={form.customerId}
-                        onChange={handleChange}
-                        disabled={customerLocked}   // ✅ prevent changing once locked
-                        className="flex-1 border rounded px-3 py-2"
-                    >
-                        <option value="">ជ្រើសរើសអតិថិជន</option>
-                        {customers.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+        <div className="p-4 max-w-lg mx-auto space-y-4">
 
-                {/* Product Dropdown */}
-                <div className="flex items-center gap-3">
-                    <label className="w-32 text-sm font-medium">ផលិតផល</label>
-                    <select
-                        name="productId"
-                        value={form.productId}
-                        onChange={handleChange}
-                        className="flex-1 border rounded px-3 py-2"
-                    >
-                        <option value="">-- ជ្រើសរើសផលិតផល --</option>
-                        {products.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+            <SelectRow
+                label="អតិថិជន"
+                name="customerId"
+                value={form.customerId}
+                onChange={handleChange}
+                disabled={customerLocked}
+                options={customers}
+            />
 
-                {/* Quantity */}
-                <div className="flex items-center gap-3">
-                    <label className="w-32 text-sm font-medium">ចំនួន</label>
-                    <input
-                        name="qty"
-                        value={form.qty}
-                        onChange={handleChange}
-                        className="flex-1 border rounded px-3 py-2"
-                        type="number"
-                        placeholder="ចំនួន"
-                    />
-                </div>
+            <SelectRow
+                label="ផលិតផល"
+                name="productId"
+                value={form.productId}
+                onChange={handleChange}
+                options={products}
+            />
 
-                {/* Price */}
-                <div className="flex items-center gap-3">
-                    <label className="w-32 text-sm font-medium">តម្លៃ</label>
-                    <input
-                        name="price"
-                        value={form.price}
-                        onChange={handleChange}
-                        className="flex-1 border rounded px-3 py-2"
-                        type="number"
-                        placeholder="តម្លៃ"
-                    />
-                </div>
+            <InputRow label="ចំនួន" name="qty" value={form.qty} onChange={handleChange} />
+            <InputRow label="តម្លៃ" name="price" value={form.price} onChange={handleChange} />
 
-                {/* Add to Cart Button */}
-                <div className="mt-2 flex justify-end">
-                    <button
-                        onClick={handleAddToCart}
-                        className="flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
-                    >
-                        <ShoppingCartIcon className="h-5 w-5" />
-                        បន្ថែមទៅកន្ត្រក
-                    </button>
-                </div>
-
-                {/* Cart Table */}
-                {cartItems.length > 0 && (
-                    <table className="mt-4 w-full border">
-                        <thead>
-                            <tr className="bg-gray-100">
-                                <th className="border px-2 py-1">ផលិតផល</th>
-                                <th className="border px-2 py-1">ចំនួន</th>
-                                <th className="border px-2 py-1">តម្លៃ</th>
-                                <th className="border px-2 py-1">តម្លៃរុប</th>
-                                <th className="border px-2 py-1"></th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {cartItems.map((item, idx) => (
-                                <tr key={idx}>
-                                    <td className="border px-2 py-1">{item.product.name}</td>
-                                    <td className="border px-2 py-1">{item.qty}</td>
-                                    <td className="border px-2 py-1">{item.price}</td>
-                                    <td className="border px-2 py-1">{item.lineTotal}</td>
-                                    <td className="border px-2 py-1 text-center">
-                                        <button
-                                            onClick={() => handleRemoveFromCart(idx)}
-                                            className="text-red-600 hover:text-red-800"
-                                        >
-                                            ❌
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-
-                            <tr className="bg-gray-50 font-semibold">
-                                <td colSpan="3" className="text-right pr-4">សរុប:</td>
-                                <td className="border px-4 py-3">
-                                    {new Intl.NumberFormat("en-US", {
-                                        style: "currency",
-                                        currency: "USD",
-                                        maximumFractionDigits: 0,
-                                    }).format(
-                                        cartItems.reduce((sum, i) => sum + i.lineTotal, 0)
-                                    )}
-                                </td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                )}
-
-                {/* Paid Amount */}
-                <div className="flex items-center gap-3 mt-3">
-                    {/* <label className="w-32 text-sm font-medium">ទឹកប្រាក់បង់</label> */}
-                    <input
-                        name="paidAmount"
-                        value={form.paidAmount}
-                        onChange={handleChange}
-                        className="flex-1 border rounded px-3 py-2"
-                        type="number"
-                        placeholder="ទឹកប្រាក់បង់"
-                    />
-                </div>
-
-                {/* Remark */}
-                <div className="flex items-center gap-3 mt-3">
-                    {/* <label className="w-32 text-sm font-medium">ចំណាំ</label> */}
-                    <input
-                        name="remark"
-                        value={form.remark}
-                        onChange={handleChange}
-                        className="flex-1 border rounded px-3 py-2"
-                        placeholder="ចំណាំ"
-                    />
-                </div>
+            <div className="flex justify-end">
+                <button
+                    onClick={handleAddToCart}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                    <ShoppingCartIcon className="h-5 w-5" />
+                    បន្ថែមទៅកន្ត្រក
+                </button>
             </div>
 
-            {/* Buttons */}
-            <div className="mt-6 flex gap-3">
+            {cartItems.length > 0 && (
+                <CartTable items={cartItems} onRemove={handleRemoveFromCart} />
+            )}
+
+            <InputRow
+                name="paidAmount"
+                value={form.paidAmount}
+                onChange={handleChange}
+                placeholder="ទឹកប្រាក់បង់"
+            />
+
+            <InputRow
+                name="remark"
+                value={form.remark}
+                onChange={handleChange}
+                placeholder="ចំណាំ"
+            />
+
+            <div className="flex gap-3">
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300 transition"
+                    className="flex-1 bg-gray-200 py-2 rounded"
                 >
                     ថយក្រោយ
                 </button>
@@ -343,11 +248,77 @@ export default function ProductSale() {
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+                    className="flex-1 bg-green-600 text-white py-2 rounded"
                 >
                     {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
                 </button>
             </div>
         </div>
+    );
+}
+
+/* ===================== REUSABLE UI ===================== */
+
+function SelectRow({ label, options = [], ...props }) {
+  const safeOptions = Array.isArray(options) ? options : [];
+
+  return (
+    <div className="flex items-center gap-3">
+      <label className="w-32 text-sm font-medium">{label}</label>
+      <select {...props} className="flex-1 border rounded px-3 py-2">
+        <option value="">ជ្រើសរើស</option>
+        {safeOptions.map(o => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
+function InputRow({ label, ...props }) {
+    return (
+        <div className="flex items-center gap-3">
+            {label && <label className="w-32 text-sm font-medium">{label}</label>}
+            <input {...props} className="flex-1 border rounded px-3 py-2" />
+        </div>
+    );
+}
+
+function CartTable({ items, onRemove }) {
+    const total = items.reduce((sum, i) => sum + i.lineTotal, 0);
+
+    return (
+        <table className="w-full border">
+            <thead className="bg-gray-100">
+                <tr>
+                    <th>ផលិតផល</th>
+                    <th>ចំនួន</th>
+                    <th>តម្លៃ</th>
+                    <th>សរុប</th>
+                    <th />
+                </tr>
+            </thead>
+            <tbody>
+                {items.map((i, idx) => (
+                    <tr key={idx}>
+                        <td>{i.product.name}</td>
+                        <td>{i.qty}</td>
+                        <td>{i.price}</td>
+                        <td>{i.lineTotal}</td>
+                        <td>
+                            <button onClick={() => onRemove(idx)}>❌</button>
+                        </td>
+                    </tr>
+                ))}
+                <tr className="font-semibold bg-gray-50">
+                    <td colSpan="3" className="text-right pr-4">សរុប:</td>
+                    <td>{total}</td>
+                    <td />
+                </tr>
+            </tbody>
+        </table>
     );
 }

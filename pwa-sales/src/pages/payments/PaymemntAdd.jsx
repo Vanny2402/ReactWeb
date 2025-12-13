@@ -40,7 +40,7 @@ const PaymentAdd = () => {
   useEffect(() => {
     customerApi
       .getAllCustomers()
-      .then((res) => setCustomers(res.data))
+      .then((data) => setCustomers(Array.isArray(data) ? data : []))
       .catch(() => setError("មិនអាចទាញយកអតិថិជនបានទេ!"));
   }, []);
 

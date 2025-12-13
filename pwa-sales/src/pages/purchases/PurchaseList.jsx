@@ -1,51 +1,74 @@
-import { useEffect, useState } from "react";
-import { getPurchasesByMonthYear, deletePurchase } from "../../api/purchaseApi.js";
+import { useEffect, useState, Fragment } from "react";
+import purchaseApi from "../../api/purchaseApi";
 import { Link } from "react-router-dom";
 import { FiLoader } from "react-icons/fi";
 
 const khMonths = [
   "មករា", "កុម្ភះ", "មីនា", "មេសា", "ឧសភា", "មិថុ",
-  "កក្ដដា", "សីហា", "កញ្ញា", "តុលា", "វិឆ្ឆិកា", "ធ្នូ"
+  "កក្ដដា", "សីហា", "កញ្ញា", "តុលា", "វិឆ្ឆិកា", "ធ្នូ",
 ];
 
-// Currency formatter
-const formatCurrency = (value) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+// =======================
+// Utils
+// =======================
 
-// Convert digits to Khmer numerals
+const formatCurrency = (value = 0) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+
 const toKhmerDigits = (num) =>
   num.toString().replace(/\d/g, (d) => ["០","១","២","៣","៤","៥","៦","៧","៨","៩"][d]);
 
-// Format date in Khmer style
 const formatKhDate = (dateStr) => {
+  if (!dateStr) return "-";
   const d = new Date(dateStr);
   return `${toKhmerDigits(d.getDate())} - ${khMonths[d.getMonth()]}`;
 };
+
+// =======================
+// Component
+// =======================
 
 export default function PurchaseList() {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Current month/year
   const now = new Date();
-  const currentMonth = now.getMonth() + 1; // backend expects 1–12
+  const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
   const currentMonthName = khMonths[now.getMonth()];
 
   useEffect(() => {
-    getPurchasesByMonthYear({ month: currentMonth, year: currentYear })
-      .then((list) => setPurchases(list))
-      .catch((err) => {
+    const loadPurchases = async () => {
+      try {
+        setLoading(true);
+        const data = await purchaseApi.getPurchasesByMonthYear({
+          month: currentMonth,
+          year: currentYear,
+        });
+        setPurchases(data);
+      } catch (err) {
         console.error("Failed to fetch purchases", err);
         setPurchases([]);
-      })
-      .finally(() => setLoading(false));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPurchases();
   }, [currentMonth, currentYear]);
 
   const handleDelete = async (id) => {
-    if (window.confirm("តើអ្នកប្រាកដថាចង់លុបការទិញនេះ?")) {
-      await deletePurchase(id);
+    if (!window.confirm("តើអ្នកប្រាកដថាចង់លុបការទិញនេះ?")) return;
+
+    try {
+      await purchaseApi.deletePurchase(id);
       setPurchases((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("លុបមិនបានជោគជ័យ");
     }
   };
 
@@ -58,7 +81,6 @@ export default function PurchaseList() {
     );
   }
 
-  // Monthly total
   const totalThisMonth = purchases.reduce(
     (sum, p) => sum + (p.totalPrice || 0),
     0
@@ -69,18 +91,17 @@ export default function PurchaseList() {
       <table className="table-auto border w-full">
         <thead>
           <tr className="bg-gray-100">
-            <th className="border px-2 py-1 text-left">ផលិតផល</th>
-            <th className="border px-2 py-1 text-left">ចំនួន</th>
-            <th className="border px-2 py-1 text-left">តម្លៃ</th>
-            <th className="border px-2 py-1 text-left">សរុប</th>
+            <th className="border px-2 py-1">ផលិតផល</th>
+            <th className="border px-2 py-1">ចំនួន</th>
+            <th className="border px-2 py-1">តម្លៃ</th>
+            <th className="border px-2 py-1">សរុប</th>
           </tr>
         </thead>
         <tbody>
           {purchases.map((p) => (
-            <>
-              {/* Group header row */}
-              <tr key={`purchase-${p.id}`} className="bg-yellow-300 font-semibold">
-                <td colSpan={4} className="border px-2 py-1 text-left">
+            <Fragment key={p.id}>
+              <tr className="bg-yellow-300 font-semibold">
+                <td colSpan={4} className="border px-2 py-1">
                   <div className="flex justify-between">
                     <span>លេខសម្គាល់ {p.id}</span>
                     <span>{formatKhDate(p.createdAt)}</span>
@@ -88,13 +109,13 @@ export default function PurchaseList() {
                     <span className="space-x-2">
                       <Link
                         to={`/purchases/edit/${p.id}`}
-                        className="text-blue-600 hover:underline"
+                        className="text-blue-600"
                       >
                         កែប្រែ
                       </Link>
                       <button
                         onClick={() => handleDelete(p.id)}
-                        className="text-red-600 hover:underline"
+                        className="text-red-600"
                       >
                         លុប
                       </button>
@@ -103,14 +124,17 @@ export default function PurchaseList() {
                 </td>
               </tr>
 
-              {/* Item rows */}
-              {Array.isArray(p.items) && p.items.length > 0 ? (
-                p.items.map((item, idx) => (
-                  <tr key={`item-${p.id}-${idx}`}>
-                    <td className="border px-2 py-1 text-left">{item.name}</td>
-                    <td className="border px-2 py-1 text-left">{item.quantity}</td>
-                    <td className="border px-2 py-1 text-left">{formatCurrency(item.price)}</td>
-                    <td className="border px-2 py-1 text-left">{formatCurrency(item.lineTotal)}</td>
+              {p.items?.length ? (
+                p.items.map((item, i) => (
+                  <tr key={`${p.id}-${i}`}>
+                    <td className="border px-2 py-1">{item.name}</td>
+                    <td className="border px-2 py-1">{item.quantity}</td>
+                    <td className="border px-2 py-1">
+                      {formatCurrency(item.price)}
+                    </td>
+                    <td className="border px-2 py-1">
+                      {formatCurrency(item.lineTotal)}
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -121,31 +145,30 @@ export default function PurchaseList() {
                 </tr>
               )}
 
-              {/* Subtotal row */}
               <tr className="bg-gray-200 font-semibold">
-                <td colSpan={3} className="border px-2 py-1 text-left text-red-600">
-                  សរុបការទិញលេខ {p.id} គឺ:
+                <td colSpan={3} className="border px-2 py-1 text-red-600">
+                  សរុបការទិញលេខ {p.id}
                 </td>
-                <td className="border px-2 py-1 text-left">
+                <td className="border px-2 py-1">
                   {formatCurrency(p.totalPrice)}
                 </td>
               </tr>
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>
 
-      {/* Total this month */}
       <div className="mt-4 text-right font-bold text-lg">
         សរុបការទិញខែនេះ ({currentMonthName}){" "}
-        <span className="text-blue-600">{formatCurrency(totalThisMonth)}</span>
+        <span className="text-blue-600">
+          {formatCurrency(totalThisMonth)}
+        </span>
       </div>
 
-      {/* Add Purchase button */}
       <div className="mt-6">
         <Link
           to="/purchases/add"
-          className="block w-full bg-blue-600 text-white text-center py-3 rounded hover:bg-blue-700"
+          className="block w-full bg-blue-600 text-white text-center py-3 rounded"
         >
           បន្ថែមការទិញ
         </Link>
