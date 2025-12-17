@@ -1,33 +1,32 @@
 import { useEffect, useState, useMemo } from "react";
 import { FiPlus, FiLoader } from "react-icons/fi";
-import { Link } from "react-router-dom";
-import { getAllCustomers } from "../../api/customerApi.js";
+import { useNavigate } from "react-router-dom";
+import {
+  getAllCustomers,
+  getCustomerById,
+} from "../../api/customerApi";
 
 export default function CustomerList() {
+  const navigate = useNavigate();
+
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // ✅ Load customers once on mount
   useEffect(() => {
     const loadCustomers = async () => {
       try {
-        setLoading(true);
         const res = await getAllCustomers();
-        // API returns array of customers
         setCustomers(res);
       } catch (err) {
-        console.error(err);
         alert("មិនអាចទាញបញ្ជីអតិថិជនបានទេ!");
       } finally {
         setLoading(false);
       }
     };
-
     loadCustomers();
   }, []);
 
-  // ✅ Derived state: filter + sum
   const filteredCustomers = useMemo(
     () =>
       customers.filter((c) =>
@@ -38,49 +37,56 @@ export default function CustomerList() {
 
   const sumDebt = useMemo(
     () =>
-      customers.reduce(
-        (sum, c) => sum + Number(c.totalDebt ?? 0),
-        0
-      ),
+      customers.reduce((sum, c) => sum + Number(c.totalDebt ?? 0), 0),
     [customers]
   );
 
-  // ✅ Helper to format currency
   const formatCurrency = (value) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(value);
 
+  // ✅ CALL CUSTOMER DETAILS ON CLICK
+  const handleClick = async (id) => {
+    try {
+      setLoading(true);
+      const customer = await getCustomerById(id);
+      navigate(`/customers/${id}`, { state: customer });
+    } catch (err) {
+      alert("មិនអាចទាញព័ត៌មានអតិថិជនបានទេ!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 mb-16">
-      {/* Search box */}
+
       <input
-        type="text"
+        className="w-full border rounded-xl px-4 py-2 mb-4"
         placeholder="ស្វែងរក..."
-        className="w-full border rounded-xl px-4 py-2 mb-4 shadow-sm"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-
-      {/* Total debt */}
-      <div className="mb-4 text-right font-bold text-purple-600">
-        បំណុលសរុបគ្រប់អតិថិជន: {formatCurrency(sumDebt)}
+      {/* Balance Card */}
+      <div className="px-4 mb-4">
+        <div className="rounded-2xl p-3 text-white bg-gradient-to-r from-indigo-500 to-purple-500 shadow">
+          <p className="text-1xl font-bold ">ប្រាក់ត្រូវទទួលសរុប: {formatCurrency(sumDebt)}</p>
+        </div>
       </div>
-
-      {/* Customer list */}
       <div className="space-y-3">
         {loading ? (
-          <div className="flex justify-center items-center py-10 text-gray-500">
-            <FiLoader className="animate-spin mr-2" size={20} />
+          <div className="flex justify-center py-10 text-gray-500">
+            <FiLoader className="animate-spin mr-2" />
             កំពុងផ្ទុក...
           </div>
         ) : (
           filteredCustomers.map((c) => (
-            <Link
+            <div
               key={c.id}
-              to={`/customers/${c.id}`}
-              className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition"
+              onClick={() => handleClick(c.id)}
+              className="flex justify-between items-center bg-white p-4 rounded-xl shadow cursor-pointer hover:shadow-md"
             >
               <div>
                 <p className="font-semibold">{c.name}</p>
@@ -88,24 +94,22 @@ export default function CustomerList() {
                 <p className="text-sm text-gray-400">{c.address}</p>
               </div>
               <p
-                className={`font-bold ${
-                  Number(c.totalDebt) > 0 ? "text-red-600" : "text-green-600"
-                }`}
+                className={`font-bold ${c.totalDebt > 0 ? "text-red-600" : "text-green-600"
+                  }`}
               >
                 {formatCurrency(c.totalDebt ?? 0)}
               </p>
-            </Link>
+            </div>
           ))
         )}
       </div>
 
-      {/* Add customer button */}
-      <Link
-        to="/customers/add"
-        className="fixed bottom-20 right-5 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition"
+      <button
+        onClick={() => navigate("add")}
+        className="fixed bottom-20 right-5 bg-blue-600 text-white p-4 rounded-full"
       >
         <FiPlus size={24} />
-      </Link>
+      </button>
     </div>
   );
 }

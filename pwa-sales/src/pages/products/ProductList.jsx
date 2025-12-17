@@ -17,7 +17,7 @@ export default function ProductList() {
   async function fetchProducts() {
     try {
       const res = await getAllProducts();
-      setProducts(res.data);
+      setProducts(res); // <-- FIXED
     } catch (err) {
       console.error(err);
       alert("មិនអាចទាញទិន្នន័យផលិតផលបានទេ!");
@@ -26,12 +26,14 @@ export default function ProductList() {
     }
   }
 
+
   function handlePurchas(id) {
     nav(`/products/edit/${id}?mode=1`);
   }
 
   function handleSale(id) {
-    nav(`/sales/ProductSale/${id}`);
+    nav(`/sales/ProductSale?productId=${id}`);
+
   }
 
   const filteredProducts = products.filter((p) =>
@@ -100,13 +102,12 @@ function ProductCard({ product, Purchase, Sale }) {
         <p>
           <span className="font-semibold">ចំនួនស្តុក:</span>{" "}
           <span
-            className={`px-2 py-1 rounded text-white ${
-              product.stock > 10
+            className={`px-2 py-1 rounded text-white ${product.stock > 10
                 ? "bg-green-600"
                 : product.stock > 0
-                ? "bg-yellow-500"
-                : "bg-red-600"
-            }`}
+                  ? "bg-yellow-500"
+                  : "bg-red-600"
+              }`}
           >
             {product.stock}
           </span>
@@ -118,12 +119,6 @@ function ProductCard({ product, Purchase, Sale }) {
 
       {/* Action Buttons */}
       <div className="mt-3 flex gap-2">
-        <button
-          onClick={() => Purchase(product.id)}
-          className="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          ទិញចូល
-        </button>
         <button
           onClick={() => Sale(product.id)}
           className="flex-1 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition"

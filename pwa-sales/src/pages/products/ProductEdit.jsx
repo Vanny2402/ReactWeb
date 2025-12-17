@@ -26,7 +26,7 @@ export default function ProductModify() {
   async function fetchProduct() {
     try {
       const res = await getProductById(id);
-      setForm(res.data);
+      setForm(res); // <-- FIXED
     } catch (err) {
       console.error(err);
       alert("Failed to load product");
@@ -35,6 +35,7 @@ export default function ProductModify() {
       setLoading(false);
     }
   }
+
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -101,7 +102,7 @@ export default function ProductModify() {
             onChange={handleChange}
             required
           >
-            <option value="">-- ជ្រើសរើស --</option>
+            <option value=""> ជ្រើសរើស </option>
             <option value="ឡេ">ឡេ</option>
             <option value="សាប៊ួ">សាប៊ួ</option>
             <option value="ហ្វូម">ហ្វូម</option>

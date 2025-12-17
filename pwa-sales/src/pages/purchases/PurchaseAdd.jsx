@@ -20,29 +20,33 @@ export default function PurchaseAdd() {
     purchaseTime: moment().tz("Asia/Phnom_Penh").format("HH:mm"),
   });
 
+  // Load products
   useEffect(() => {
     (async () => {
       try {
         const res = await getAllProducts();
-        setProducts(res.data || []);
+        setProducts(res || []); // ✅ assume API returns array
       } catch (err) {
         console.error("Failed to load products", err);
+        alert("មិនអាចទាញយកផលិតផលបានទេ");
       }
     })();
   }, []);
 
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "productId") {
-      const selected = products.find((p) => p.id === Number(value));
-      if (selected) {
-        setForm((prev) => ({ ...prev, price: selected.price }));
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "productId") {
+        const selected = products.find((p) => p.id === Number(value));
+        if (selected) updated.price = selected.price;
       }
-    }
+      return updated;
+    });
   };
 
+  // Add product to cart
   const handleAddToCart = () => {
     const product = products.find((p) => p.id === Number(form.productId));
     if (!product || !form.quantity || !form.price) {
@@ -52,35 +56,43 @@ export default function PurchaseAdd() {
 
     const lineTotal = Number(form.quantity) * Number(form.price);
 
-    setCartItems((prev) => [
-      ...prev,
-      {
-        product: { id: product.id, name: product.name },
-        quantity: Number(form.quantity),
-        price: Number(form.price),
-        lineTotal,
-      },
-    ]);
+    setCartItems((prev) => {
+      const existingIndex = prev.findIndex((i) => i.product.id === product.id);
+      if (existingIndex >= 0) {
+        // ✅ update quantity if product already exists
+        const updated = [...prev];
+        updated[existingIndex].quantity += Number(form.quantity);
+        updated[existingIndex].lineTotal =
+          updated[existingIndex].quantity * updated[existingIndex].price;
+        return updated;
+      }
+      return [
+        ...prev,
+        {
+          product: { id: product.id, name: product.name },
+          quantity: Number(form.quantity),
+          price: Number(form.price),
+          lineTotal,
+        },
+      ];
+    });
 
-    setForm((prev) => ({ ...prev, quantity: "", price: product.price }));
+    // Reset quantity only
+    setForm((prev) => ({ ...prev, quantity: "" }));
   };
 
   const handleRemoveFromCart = (index) => {
     setCartItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSave = async () => {
-    if (cartItems.length === 0) {
-      alert("មិនអាចរក្សាទុកបានទេ ព្រោះអ្នកមិនបានបន្ថែមទំនិញទៅកន្ត្រក!");
-      return;
-    }
-
+  // Build purchase payload
+  const buildPurchasePayload = () => {
     const totalPrice = cartItems.reduce((sum, i) => sum + i.lineTotal, 0);
     const combinedDateTime = moment
       .tz(`${form.purchaseDate} ${form.purchaseTime}`, "YYYY-MM-DD HH:mm", "Asia/Phnom_Penh")
       .format("YYYY-MM-DDTHH:mm:ssZ");
 
-    const purchase = {
+    return {
       supplier: form.supplier,
       remark: form.remark,
       totalPrice,
@@ -92,14 +104,21 @@ export default function PurchaseAdd() {
         lineTotal: i.lineTotal,
       })),
     };
+  };
+
+  const handleSave = async () => {
+    if (cartItems.length === 0) {
+      alert("មិនអាចរក្សាទុកបានទេ ព្រោះអ្នកមិនបានបន្ថែមទំនិញទៅកន្ត្រក!");
+      return;
+    }
 
     setSaving(true);
     try {
-      await createPurchase(purchase);
+      await createPurchase(buildPurchasePayload());
       alert("ការទិញបានបញ្ចូលដោយជោគជ័យ!");
       navigate("/purchases");
     } catch (err) {
-      console.error(err);
+      console.error("Save failed", err);
       alert("បញ្ហាក្នុងការបញ្ចូលទិញ");
       setSaving(false);
     }
@@ -125,7 +144,7 @@ export default function PurchaseAdd() {
           type="date"
           name="purchaseDate"
           value={form.purchaseDate}
-          onChange={handleChange} 
+          onChange={handleChange}
           className="flex-1 border rounded py-3 pl-2 pr-2"
         />
         <input
@@ -133,7 +152,7 @@ export default function PurchaseAdd() {
           name="purchaseTime"
           value={form.purchaseTime}
           onChange={handleChange}
-          className="flex-1 border rounded px-0 pl-2"
+          className="flex-1 border rounded pl-2"
         />
       </div>
 

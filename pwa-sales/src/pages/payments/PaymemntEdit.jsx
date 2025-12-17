@@ -1,88 +1,155 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import customerApi from "../../api/customerApi";   // ✅ for customer list
-import paymentApi from "../../api/paymentApi";     // ✅ for payment CRUD
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import paymentApi from "../../api/paymentApi";
+import { FiUser, FiDollarSign, FiCalendar, FiFileText } from "react-icons/fi";
 
 const PaymentEdit = () => {
   const { id } = useParams();
-  const [customers, setCustomers] = useState([]);
-  const [formData, setFormData] = useState({
-    customerId: "",
+  const navigate = useNavigate();
+
+  const [payment, setPayment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
     amount: "",
-    paymentDate: "",
     remark: "",
+    paymentDate: "",
   });
 
   useEffect(() => {
-    // Load customers for dropdown
-    customerApi.getAllCustomers().then((res) => setCustomers(res.data));
+    const loadPayment = async () => {
+      try {
+        const res = await paymentApi.getPaymentById(id);
+        const data = res.data;
+        setPayment(data);
 
-    // Load payment details by ID
-    paymentApi.getPaymentById(id).then((res) => {
-      const { customer, amount, paymentDate, remark } = res.data;
-      setFormData({
-        customerId: customer.id,
-        amount,
-        paymentDate: paymentDate.slice(0, 16), // format for datetime-local
-        remark: remark || "",
-      });
-    });
+        setForm({
+          amount: data.amount || "",
+          remark: data.remark || "",
+          paymentDate: data.paymentDate
+            ? new Date(data.paymentDate).toISOString().slice(0, 10)
+            : "",
+        });
+      } catch (err) {
+        console.error(err);
+        alert("❌ មិនអាចទាញយកការបង់ប្រាក់បានទេ!");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPayment();
   }, [id]);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await paymentApi.updatePayment(id, formData);   // ✅ use wrapper
-    alert("Payment updated!");
+    try {
+      await paymentApi.updatePayment(id, {
+        id: payment.id,
+        amount: Number(form.amount),   // ensure numeric
+        remark: form.remark,
+        paymentDate: new Date(form.paymentDate).toISOString(), // ISO format
+        customerId: payment.customer?.id, // FK instead of nested object
+      });
+      alert("✅ Payment updated successfully!");
+      navigate("/payments");
+    } catch (err) {
+      console.error("Update failed:", err.response?.data || err.message);
+      alert("❌ មិនអាចកែប្រែការបង់ប្រាក់បានទេ!");
+    }
   };
 
+
+  if (loading) return <div className="text-center py-10">⏳ Loading...</div>;
+  if (!payment) return <div className="text-center py-10">No payment found</div>;
+
   return (
-    <form onSubmit={handleSubmit} className="form">
-      <label>Customer</label>
-      <select
-        name="customerId"
-        value={formData.customerId}
-        onChange={handleChange}
-        required
-      >
-        <option value="">Select Customer</option>
-        {customers.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-      </select>
+    <div className="max-w-lg mx-auto bg-white shadow-md rounded-lg p-6">
+      <h2 className="text-xl font-bold mb-6 text-gray-700">
+        ✏️ កែប្រែការបង់ប្រាក់ #{payment.id}
+      </h2>
 
-      <label>Amount</label>
-      <input
-        type="number"
-        name="amount"
-        value={formData.amount}
-        onChange={handleChange}
-        required
-      />
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Customer (read-only) */}
+        <div>
+          <label className="flex items-center text-gray-600 mb-1">
+            <FiUser className="mr-2" /> អតិថិជន
+          </label>
+          <input
+            type="text"
+            value={payment.customer?.name || ""}
+            readOnly
+            className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-700 cursor-not-allowed"
+          />
+          <small className="text-gray-400">អតិថិជនមិនអាចកែប្រែ</small>
+        </div>
 
-      <label>Payment Date</label>
-      <input
-        type="datetime-local"
-        name="paymentDate"
-        value={formData.paymentDate}
-        onChange={handleChange}
-      />
+        {/* Amount */}
+        <div>
+          <label className="flex items-center text-gray-600 mb-1">
+            <FiDollarSign className="mr-2" /> ទឹកប្រាក់
+          </label>
+          <input
+            type="number"
+            name="amount"
+            value={form.amount}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-300"
+            required
+          />
+        </div>
 
-      <label>Remark</label>
-      <textarea
-        name="remark"
-        value={formData.remark}
-        onChange={handleChange}
-        placeholder="Optional notes..."
-      />
+        {/* Remark */}
+        <div>
+          <label className="flex items-center text-gray-600 mb-1">
+            <FiFileText className="mr-2" /> ចំណាំ
+          </label>
+          <input
+            type="text"
+            name="remark"
+            value={form.remark}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-300"
+            placeholder="Optional note..."
+          />
+        </div>
 
-      <button type="submit">Update Payment</button>
-    </form>
+        {/* Payment Date */}
+        <div>
+          <label className="flex items-center text-gray-600 mb-1">
+            <FiCalendar className="mr-2" /> កាលបរិច្ឆេទ
+          </label>
+          <input
+            type="date"
+            name="paymentDate"
+            value={form.paymentDate}
+            onChange={handleChange}
+            className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-300"
+            required
+          />
+        </div>
+
+        {/* Buttons */}
+        <div className="flex justify-between mt-6">
+          <button
+            type="button"
+            onClick={() => navigate("/payments")}
+            className="px-4 py-2 rounded bg-gray-300 text-gray-700 hover:bg-gray-400"
+          >
+            ថយក្រោយ
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+          >
+            💾 រក្សាទុក
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 

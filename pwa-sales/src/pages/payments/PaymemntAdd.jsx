@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import customerApi from "../../api/customerApi";
 import paymentApi from "../../api/paymentApi";
 import "./PaymentList.css";
 
-// Utility: format date for datetime-local input in Cambodia timezone
+// Utility: format date for datetime-local input
 const formatDateForInput = (date) => {
   const options = {
     timeZone: "Asia/Phnom_Penh",
@@ -22,17 +22,26 @@ const formatDateForInput = (date) => {
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 };
 
+// Reusable form group (label + input/select)
+const FormGroup = ({ label, children }) => (
+  <div className="form-group">
+    <label>{label}</label>
+    {children}
+  </div>
+);
+
 const PaymentAdd = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    customerId: "",
+    customerId: id || "",
     amount: "",
-    paymentDate: formatDateForInput(new Date()), // auto-select Now in Cambodia timezone
+    paymentDate: formatDateForInput(new Date()),
     remark: "",
   });
 
@@ -45,8 +54,8 @@ const PaymentAdd = () => {
   }, []);
 
   // Handle input changes
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Handle form submit
@@ -59,13 +68,12 @@ const PaymentAdd = () => {
       const payload = {
         customer: { id: parseInt(formData.customerId, 10) },
         amount: Number(formData.amount),
-        paymentDate: formData.paymentDate, // already in Cambodia timezone format
+        paymentDate: formData.paymentDate,
         remark: formData.remark,
       };
 
       await paymentApi.createPayment(payload);
-
-      alert("💚 ការបង់ប្រាក់បានបន្ថែមដោយជោគជ័យ!");
+      alert("ការបង់ប្រាក់បានបន្ថែមដោយជោគជ័យ!");
       navigate("/payments");
     } catch (err) {
       console.error(err);
@@ -78,29 +86,26 @@ const PaymentAdd = () => {
   return (
     <div className="payment-add">
       <form onSubmit={handleSubmit} className="form-card">
-        {error && <p style={{ color: "red", marginBottom: 10 }}>{error}</p>}
+        {error && <p className="error-text">{error}</p>}
 
-        {/* CUSTOMER */}
-        <div className="form-group">
-          <label>អតិថិជន</label>
+        <FormGroup label="អតិថិជន">
           <select
             name="customerId"
             value={formData.customerId}
             onChange={handleChange}
             required
+            disabled={!!id}
           >
             <option value="">ជ្រើសរើសអតិថិជន</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            {customers.map(({ id, name }) => (
+              <option key={id} value={id}>
+                {name}
               </option>
             ))}
           </select>
-        </div>
+        </FormGroup>
 
-        {/* AMOUNT */}
-        <div className="form-group">
-          <label>ចំនួន</label>
+        <FormGroup label="ទឹកប្រាក់">
           <input
             type="number"
             name="amount"
@@ -109,32 +114,28 @@ const PaymentAdd = () => {
             required
             min="1"
           />
-        </div>
+        </FormGroup>
 
-        {/* DATE + REMARK */}
         <div className="form-row">
-          <div className="form-group">
-            <label>កាលបរិច្ឆេទ</label>
+          <FormGroup label="កាលបរិច្ឆេទ">
             <input
               type="datetime-local"
               name="paymentDate"
               value={formData.paymentDate}
               onChange={handleChange}
             />
-          </div>
+          </FormGroup>
 
-          <div className="form-group">
-            <label>ចំណាំ</label>
+          <FormGroup label="ចំណាំ">
             <input
               type="text"
               name="remark"
               value={formData.remark}
               onChange={handleChange}
             />
-          </div>
+          </FormGroup>
         </div>
 
-        {/* SAVE BUTTON */}
         <button type="submit" className="btn btn-submit" disabled={loading}>
           {loading ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
         </button>

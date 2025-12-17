@@ -69,7 +69,7 @@ export default function ProductAdd() {
           onChange={(e) => setProductType(e.target.value)}
           required
         >
-          <option value="">-- ជ្រើសរើសប្រភេទ --</option>
+          <option value=""> ជ្រើសរើសប្រភេទ </option>
           
           <option value="ឡេ">ឡេ</option>
           <option value="សាប៊ួ">សាប៊ួ</option>

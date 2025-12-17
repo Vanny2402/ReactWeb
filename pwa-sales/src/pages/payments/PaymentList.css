@@ -1,5 +1,4 @@
-/*=========================GLOBAL LAYOUT=========================*/ 
-
+/* ========================= GLOBAL LAYOUT ========================= */
 .payment-list,
 .payment-add {
   padding: 20px;
@@ -7,11 +6,12 @@
   font-family: system-ui, sans-serif;
   color: #333;
 }
+
 /* ========================= SEARCH BAR ========================= */
 .search-bar {
   width: 100%;
   padding: 10px 14px;
-  margin-bottom: 20px;
+  margin-bottom: 4px; /* unified margin */
   font-size: 15px;
   border: 1px solid #ccc;
   border-radius: 10px;
@@ -63,11 +63,49 @@
   color: #555;
 }
 
+/* ========================= CARD HEADER ========================= */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customer-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.inline-actions {
+  display: flex;
+  gap: 4px; /* tighter spacing between icons */
+}
+
+/* ========================= ICON BUTTONS ========================= */
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: #555;
+  transition: color 0.2s ease;
+}
+
+.icon-btn:hover {
+  color: #000;
+}
+
+.edit-icon {
+  color: #007bff;
+}
+
+.delete-icon {
+  color: #dc3545;
+}
+
 /* ========================= CARD ACTIONS ========================= */
 .card-actions {
   display: flex;
   justify-content: space-between;
-  /* Edit left, Delete right */
   align-items: center;
   margin-top: 14px;
 }
@@ -143,7 +181,6 @@ textarea {
   background-color: #ffc107;
   color: #000;
 }
-
 .btn-edit:hover {
   background-color: #e0a800;
 }
@@ -152,7 +189,6 @@ textarea {
   background-color: #dc3545;
   color: #fff;
 }
-
 .btn-delete:hover {
   background-color: #c82333;
 }
@@ -160,39 +196,13 @@ textarea {
 .btn-add {
   background-color: #28a745;
   color: #fff;
-  margin-top: 12px;   
-  display: inline-block; 
+  margin-top: 12px;
+  display: block;
+  margin: 20px auto 0;
   text-align: center;
 }
 .btn-add:hover {
   background-color: #218838;
-}
-
-.payment-list .btn-add {
-  display: block;
-  margin: 20px auto 0; 
-}
-
-.search-bar {
-  margin-bottom: 4px; 
-}
-
-.monthly-total {
-  font-size: 0.9rem;   
-  color: #333;
-  margin-bottom: 5px; 
-}
-
-.payment-list {
-  padding: 20px;
-  font-size: 15px;
-  font-family: system-ui, sans-serif;
-  color: #333;
-}
-.btn-add {
-  background-color: #28a745;
-  color: #fff;
-  margin-top: 12px;
 }
 
 .btn-submit {
@@ -204,7 +214,7 @@ textarea {
   width: 100%;
   margin-top: 16px;
 }
-
 .btn-submit:hover {
   background-color: #218838;
 }
+

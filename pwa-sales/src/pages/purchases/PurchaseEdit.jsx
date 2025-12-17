@@ -1,4 +1,3 @@
-// PurchaseEdit.jsx
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getAllProducts } from "../../api/productApi.js";
@@ -23,14 +22,18 @@ export default function PurchaseEdit() {
     purchaseTime: "",
   });
 
+  // Load products + purchase
+  // Load products + purchase
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const productRes = await getAllProducts();
-        const productList = productRes?.data || [];
-        setProducts(productList);
 
+        // ✅ Fetch products
+        const productList = await getAllProducts();
+        setProducts(productList || []);
+
+        // ✅ Fetch purchase
         const purchaseRes = await getPurchaseById(id);
         const purchase = purchaseRes?.data?.purchase || purchaseRes?.data || purchaseRes;
 
@@ -48,20 +51,19 @@ export default function PurchaseEdit() {
           purchaseTime: dt.format("HH:mm"),
         }));
 
+        // ✅ Use productList here, not products state
         setCartItems(
-          (purchase.items || []).map((i) => {
-            const prod = productList.find((p) => p.id === i.productId || p.name === i.name);
-            return {
-              product: {
-                id: prod?.id || null,
-                name: i.name || prod?.name || "មិនស្គាល់",
-              },
-              quantity: i.quantity,
-              price: i.price,
-              lineTotal: i.lineTotal,
-            };
-          })
+          (purchase.items || []).map((i) => ({
+            product: {
+              id: i.productId || i.product?.id,
+              name: i.name || "មិនស្គាល់",
+            },
+            quantity: i.quantity,
+            price: i.price,
+            lineTotal: i.lineTotal,
+          }))
         );
+
       } catch (err) {
         console.error("Failed to load purchase", err);
       } finally {
@@ -70,18 +72,20 @@ export default function PurchaseEdit() {
     })();
   }, [id]);
 
+  // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "productId") {
-      const selected = products.find((p) => p.id === Number(value));
-      if (selected) {
-        setForm((prev) => ({ ...prev, price: selected.price }));
+    setForm((prev) => {
+      const updated = { ...prev, [name]: value };
+      if (name === "productId") {
+        const selected = products.find((p) => p.id === Number(value));
+        if (selected) updated.price = selected.price;
       }
-    }
+      return updated;
+    });
   };
 
+  // Add or update product in cart
   const handleAddOrUpdate = () => {
     const product = products.find((p) => p.id === Number(form.productId));
     if (!product || !form.quantity || !form.price) {
@@ -149,14 +153,14 @@ export default function PurchaseEdit() {
 
   if (loading) {
     return (
-      <div className="p-6 max-w-3xl mx-auto text-center text-lg">
+      <div className="p-6 w-full text-center text-lg">
         ⏳ កំពុងផ្ទុកទិន្នន័យ...
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="p-6 w-full space-y-6">
       {/* Supplier + Date/Time */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <input
@@ -164,7 +168,7 @@ export default function PurchaseEdit() {
           value={form.supplier}
           onChange={handleChange}
           placeholder="អ្នកផ្គត់ផ្គង់"
-          className="border rounded px-4 py-4 text-lg"
+          className="border rounded px-4 py-4 text-lg w-full"
         />
         <div className="grid grid-cols-2 gap-4">
           <input
@@ -172,14 +176,14 @@ export default function PurchaseEdit() {
             name="purchaseDate"
             value={form.purchaseDate}
             onChange={handleChange}
-            className="border rounded px-4 py-4 text-lg"
+            className="border rounded px-4 py-4 text-lg w-full"
           />
           <input
             type="time"
             name="purchaseTime"
             value={form.purchaseTime}
             onChange={handleChange}
-            className="border rounded px-4 py-4 text-lg"
+            className="border rounded px-4 py-4 text-lg w-full"
           />
         </div>
       </div>
@@ -190,7 +194,7 @@ export default function PurchaseEdit() {
           name="productId"
           value={form.productId}
           onChange={handleChange}
-          className="border rounded px-4 py-4 text-lg"
+          className="border rounded px-4 py-4 text-lg w-full"
         >
           <option value="">ជ្រើសរើសផលិតផល</option>
           {products.map((p) => (
@@ -205,7 +209,7 @@ export default function PurchaseEdit() {
           onChange={handleChange}
           type="number"
           placeholder="ចំនួន"
-          className="border rounded px-4 py-4 text-lg"
+          className="border rounded px-4 py-4 text-lg w-full"
         />
         <input
           name="price"
@@ -213,7 +217,7 @@ export default function PurchaseEdit() {
           onChange={handleChange}
           type="number"
           placeholder="តម្លៃ"
-          className="border rounded px-4 py-4 text-lg"
+          className="border rounded px-4 py-4 text-lg w-full"
         />
       </div>
 
@@ -229,43 +233,45 @@ export default function PurchaseEdit() {
 
       {/* Cart Table */}
       {cartItems.length > 0 && (
-        <table className="w-full border mt-6 text-lg">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border px-4 py-3">ផលិតផល</th>
-              <th className="border px-4 py-3">ចំនួន</th>
-              <th className="border px-4 py-3">តម្លៃ</th>
-              <th className="border px-4 py-3">សរុប</th>
-              <th className="border px-4 py-3">សកម្មភាព</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cartItems.map((item, idx) => (
-              <tr key={idx}>
-                <td className="border px-4 py-3">{item.product.name}</td>
-                <td className="border px-4 py-3">{item.quantity}</td>
-                <td className="border px-4 py-3">{formatCurrency(item.price)}</td>
-                <td className="border px-4 py-3">{formatCurrency(item.lineTotal)}</td>
-                <td className="border px-4 py-3 text-center">
-                  <button
-                    onClick={() => handleRemoveFromCart(idx)}
-                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                  >
-                    លុប
-                  </button>
-                </td>
+        <div className="w-full overflow-x-auto">
+          <table className="min-w-full border mt-6 text-sm md:text-lg">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="border px-2 py-2 md:px-4 md:py-3">ផលិតផល</th>
+                <th className="border px-2 py-2 md:px-4 md:py-3">ចំនួន</th>
+                <th className="border px-2 py-2 md:px-4 md:py-3">តម្លៃ</th>
+                <th className="border px-2 py-2 md:px-4 md:py-3">សរុប</th>
+                <th className="border px-2 py-2 md:px-4 md:py-3">សកម្មភាព</th>
               </tr>
-            ))}
-            {/* Grand Total Row */}
-            <tr className="bg-gray-50 font-semibold">
-              <td colSpan="3" className="text-right pr-4">សរុប:</td>
-              <td className="border px-4 py-3">
-                {formatCurrency(cartItems.reduce((sum, i) => sum + i.lineTotal, 0))}
-              </td>
-              <td></td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {cartItems.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="border px-2 py-2 md:px-4 md:py-3">{item.product.name}</td>
+                  <td className="border px-2 py-2 md:px-4 md:py-3">{item.quantity}</td>
+                  <td className="border px-2 py-2 md:px-4 md:py-3">{formatCurrency(item.price)}</td>
+                  <td className="border px-2 py-2 md:px-4 md:py-3">{formatCurrency(item.lineTotal)}</td>
+                  <td className="border px-2 py-2 md:px-4 md:py-3 text-center">
+                    <button
+                      onClick={() => handleRemoveFromCart(idx)}
+                      className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
+                    >
+                      លុប
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {/* Grand Total Row */}
+              <tr className="bg-gray-50 font-semibold">
+                <td colSpan="3" className="text-right pr-2 md:pr-4">សរុប:</td>
+                <td className="border px-2 py-2 md:px-4 md:py-3">
+                  {formatCurrency(cartItems.reduce((sum, i) => sum + i.lineTotal, 0))}
+                </td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       )}
 
       {/* Remark */}
@@ -289,8 +295,8 @@ export default function PurchaseEdit() {
           onClick={handleSave}
           disabled={saving || cartItems.length === 0}
           className={`px-6 py-3 rounded text-white text-lg ${cartItems.length === 0
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
             }`}
         >
           {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}

@@ -1,13 +1,20 @@
-import { Link } from "react-router-dom";
-import React from "react";
-<Link to="/sales/report">Sale Reports</Link>
-
-import { FiX, FiHome, FiShoppingCart, FiCreditCard, FiSettings } from "react-icons/fi";
+import { Link, NavLink } from "react-router-dom";
+import {
+  FiX,
+  FiHome,
+  FiShoppingCart,
+  FiSettings,
+  FiShoppingBag,   // 👈 add this
+} from "react-icons/fi";
 
 export default function SideMenu({ isOpen, onClose }) {
+  const base = "flex items-center gap-3 text-gray-700";
+
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"}`}
+      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
       onClick={onClose}
     >
       <div
@@ -21,37 +28,29 @@ export default function SideMenu({ isOpen, onClose }) {
         </div>
 
         <nav className="flex flex-col gap-4">
-          <Link
-            to="/"
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose}
-          >
+          <Link to="/" onClick={onClose} className={base}>
             <FiHome size={18} /> ផ្ទាំងខាងដើម
           </Link>
 
-          <Link
-            to="/sales/report"
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose}
-          >
-            <FiShoppingCart size={18} /> ការលក់
+          <Link to="/sales/report" onClick={onClose} className={base}>
+            <FiShoppingCart size={18} /> ការលក់s
           </Link>
 
-          <Link
-            to="/payments"
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose}
-          >
-            <FiCreditCard size={18} /> ការបង់ប្រាក់
-          </Link>
-
-          <Link
-            to="/settings"
-            className="flex items-center gap-3 text-gray-700"
-            onClick={onClose}
-          >
+          <Link to="/settings" onClick={onClose} className={base}>
             <FiSettings size={18} /> ការកំណត់
           </Link>
+
+          {/* Purchases (NavLink with active state) */}
+          <NavLink
+            to="/purchases"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `${base} ${isActive ? "text-blue-600 font-semibold" : ""}`
+            }
+          >
+            <FiShoppingBag size={22} />
+            ទិញចូល
+          </NavLink>
         </nav>
       </div>
     </div>

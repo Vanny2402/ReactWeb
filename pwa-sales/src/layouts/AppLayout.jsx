@@ -1,35 +1,12 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import SideMenu from "../components/SideMenu";
 import BottomNav from "../components/BottomNav";
 
 export default function AppLayout({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { pathname } = useLocation();
 
-  // ✅ Default title from path map
-  const pageTitleMap = {
-    "/": "Dashboard",
-    "/customers": "អតិថិជន",
-    "/customers/add": "បង្កើតអតិថិជន",
-    "/products": "ផលិតផល",
-    "/products/add": "បង្កើតផលិតផលថ្មី",
-    "/sales": "ការលក់",
-    "/payments": "ការបង់ប្រាក់",
-    "/settings": "ការកំណត់",
-  };
-
-  let title = pageTitleMap[pathname] || "Invoice App";
-
-  // ✅ Dynamic title for edit page
-  if (pathname.startsWith("/products/edit")) {
-    title = "កែប្រែទំនិញ"; // or "Product Modify"
-  }
-
-    if (pathname.startsWith("/customers/edit")) {
-    title = "កែប្រែអតិថិជន"; // or "Customer modify"
-  }
-
+  // 👇 flip this flag to control where "Customers" link shows
+  const showCustomersInBottomNav = false; // true → BottomNav, false → SideMenu
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -40,11 +17,15 @@ export default function AppLayout({ children }) {
             <path d="M4 6h18M4 12h18M4 18h18" />
           </svg>
         </button>
-        <h1 className="text-lg font-semibold">{title}</h1>
+        <h1 className="text-lg font-semibold">គ្រប់គ្រងការលក់</h1>
       </header>
 
       {/* Side Menu */}
-      <SideMenu isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+      <SideMenu
+        isOpen={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        showCustomers={!showCustomersInBottomNav} // 👈 flip logic
+      />
 
       {/* Main Content */}
       <main className="pt-16 pb-20 px-4 flex-1 overflow-y-auto">
@@ -52,7 +33,7 @@ export default function AppLayout({ children }) {
       </main>
 
       {/* Bottom Navigation */}
-      <BottomNav />
+      <BottomNav showCustomers={showCustomersInBottomNav} />
     </div>
   );
 }
