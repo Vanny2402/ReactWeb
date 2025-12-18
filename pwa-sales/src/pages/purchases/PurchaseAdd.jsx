@@ -38,14 +38,26 @@ export default function PurchaseAdd() {
     const { name, value } = e.target;
     setForm((prev) => {
       const updated = { ...prev, [name]: value };
-      if (name === "productId") {
-        const selected = products.find((p) => p.id === Number(value));
-        if (selected) updated.price = selected.price;
-      }
+      // if (name === "productId") {
+      //   const selected = products.find((p) => p.id === Number(value));
+      //   if (selected) updated.price = selected.purchasePrice;
+      // }
       return updated;
     });
+
+    // ✅ Update purchasePrice on productTable when user inputs price
+    if (name === "price" && form.productId) {
+      setProducts((prev) =>
+        prev.map((p) =>
+          p.id === Number(form.productId)
+            ? { ...p, purchasePrice: Number(value) }
+            : p
+        )
+      );
+    }
   };
 
+  
   // Add product to cart
   const handleAddToCart = () => {
     const product = products.find((p) => p.id === Number(form.productId));
@@ -255,8 +267,8 @@ export default function PurchaseAdd() {
           onClick={handleSave}
           disabled={saving || cartItems.length === 0}
           className={`px-4 py-2 rounded text-white ${cartItems.length === 0
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-green-600 hover:bg-green-700"
+            ? "bg-gray-400 cursor-not-allowed"
+            : "bg-green-600 hover:bg-green-700"
             }`}
         >
           {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}

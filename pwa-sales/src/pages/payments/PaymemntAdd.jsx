@@ -112,7 +112,8 @@ const PaymentAdd = () => {
             value={formData.amount}
             onChange={handleChange}
             required
-            min="1"
+            min="0.01"
+            step="0.01"
           />
         </FormGroup>
 

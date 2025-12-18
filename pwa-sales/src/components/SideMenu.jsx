@@ -12,9 +12,8 @@ export default function SideMenu({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${
-        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-      }`}
+      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
       onClick={onClose}
     >
       <div
@@ -28,19 +27,9 @@ export default function SideMenu({ isOpen, onClose }) {
         </div>
 
         <nav className="flex flex-col gap-4">
-          <Link to="/" onClick={onClose} className={base}>
+          {/* <Link to="/" onClick={onClose} className={base}>
             <FiHome size={18} /> ផ្ទាំងខាងដើម
-          </Link>
-
-          <Link to="/sales/report" onClick={onClose} className={base}>
-            <FiShoppingCart size={18} /> ការលក់s
-          </Link>
-
-          <Link to="/settings" onClick={onClose} className={base}>
-            <FiSettings size={18} /> ការកំណត់
-          </Link>
-
-          {/* Purchases (NavLink with active state) */}
+          </Link> */}
           <NavLink
             to="/purchases"
             onClick={onClose}
@@ -51,6 +40,17 @@ export default function SideMenu({ isOpen, onClose }) {
             <FiShoppingBag size={22} />
             ទិញចូល
           </NavLink>
+
+          <Link to="/sales/report" onClick={onClose} className={base}>
+            <FiShoppingCart size={18} /> ការលក់s
+          </Link>
+          {/* 
+          <Link to="/settings" onClick={onClose} className={base}>
+            <FiSettings size={18} /> ការកំណត់
+          </Link> */}
+
+          {/* Purchases (NavLink with active state) */}
+
         </nav>
       </div>
     </div>

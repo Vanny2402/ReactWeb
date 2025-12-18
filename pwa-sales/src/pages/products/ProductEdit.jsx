@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById, updateProduct } from "../../api/productApi";
+import { FiLoader } from "react-icons/fi";
 
 export default function ProductModify() {
   const { id } = useParams();
@@ -60,11 +61,18 @@ export default function ProductModify() {
     }
   }
 
-  if (loading) return <p className="text-gray-600 text-center">កំពុងផ្ទុក...</p>;
+  if (loading) return <div className="flex justify-center items-center h-screen text-gray-600">
+    <FiLoader className="animate-spin mr-2" size={30} />
+    កំពុងផ្ទុក...
+  </div>
 
   return (
     <div className="p-4 max-w-lg mx-auto">
       {/* ✅ Form Fields */}
+      <h6 className="text-lg font-semibold text-center text-gray-700 mb-4">
+        កែប្រែទំនិញ
+      </h6>
+
       <div className="space-y-3">
         {/* Reusable row style: label left, input right */}
         <div className="flex items-center gap-3">

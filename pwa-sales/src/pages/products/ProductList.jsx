@@ -42,8 +42,8 @@ export default function ProductList() {
 
   return (
     <div className="p-4 pb-24">
-      {/* ✅ Search Bar */}
-      <div className="flex justify-center mb-6">
+      {/* ✅ Search Bar + Stock In/Out */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <input
           type="text"
           placeholder="ស្វែងរកតាមឈ្មោះផលិតផល..."
@@ -51,6 +51,28 @@ export default function ProductList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+
+        {/* ✅ Stock In / Stock Out */}
+        <div className="flex gap-6 text-sm font-semibold text-gray-700">
+          <span>
+            តម្លៃចូលសរុប:{" "}
+            <span className="text-green-600">
+              {products.reduce(
+                (acc, p) => acc + (p.purchasePrice || 0) * (p.stock || 0),
+                0
+              ).toLocaleString()}
+            </span>
+          </span>
+          <span>
+            តម្លៃលក់ចេញសរុប:{" "}
+            <span className="text-red-600">
+              {products.reduce(
+                (acc, p) => acc + (p.price || 0) * (p.stock || 0),
+                0
+              ).toLocaleString()}
+            </span>
+          </span>
+        </div>
       </div>
 
       {/* ✅ Loading State */}
@@ -81,9 +103,18 @@ export default function ProductList() {
       </Link>
     </div>
   );
+
 }
 
 function ProductCard({ product, Purchase, Sale }) {
+  // Format price with currency
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD", // change to "KHR" if you want Riel
+      minimumFractionDigits: 2,
+    }).format(price);
+
   return (
     <div className="bg-white shadow-md rounded-xl p-4 hover:shadow-lg transition border relative">
       {/* Edit Icon */}
@@ -99,17 +130,21 @@ function ProductCard({ product, Purchase, Sale }) {
 
       {/* Product Details */}
       <div className="text-sm text-gray-600 space-y-1">
-        <p>
-          <span className="font-semibold">ចំនួនស្តុក:</span>{" "}
+        <p className="flex items-center justify-between">
+          <span className="font-semibold">ចំនួនស្តុក:</span>
           <span
-            className={`px-2 py-1 rounded text-white ${product.stock > 10
+            className={`px-1 py-1 rounded text-white ${
+              product.stock > 10
                 ? "bg-green-600"
                 : product.stock > 0
-                  ? "bg-yellow-500"
-                  : "bg-red-600"
-              }`}
+                ? "bg-yellow-500"
+                : "bg-red-600"
+            }`}
           >
-            {product.stock}
+          {product.stock}
+          </span>
+          <span className="ml-40 font-semibold">
+            {formatPrice(product.price)}
           </span>
         </p>
         <p>

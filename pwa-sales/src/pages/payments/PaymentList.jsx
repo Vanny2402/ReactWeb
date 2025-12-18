@@ -93,7 +93,7 @@ const PaymentList = () => {
           />
 
           <div className="monthly-total">
-            <strong>ប្រាក់បានទទួលសរុបក្នុងខែនេះ {monthlyTotal.toFixed(2)}$</strong> 
+            <strong>ប្រាក់បានទទួលសរុបក្នុងខែនេះ {monthlyTotal.toFixed(2)}$</strong>
           </div>
 
           {filtered.length === 0 ? (
@@ -119,15 +119,17 @@ const PaymentList = () => {
                       </Link>
                     </div>
                   </div>
+                  <p className="flex justify-between">
+                    <span className="font-semibold">#{p.id} {p.remark}</span>
+                    <span className="font-bold mr-3">💵 ${p.amount}</span>
+                  </p>
 
-                  <p>
-                    <strong>🆔លេខទូទាត់:</strong> {p.id}
-                  </p>
-                  <p>
+
+                  {/* <p>
                     <strong>💵ទឹកប្រាក់បង់:</strong> ${p.amount}
-                  </p>
+                  </p> */}
                   <p>
-                    <strong>📅កាលបវិច្ឆេទ:</strong> {p.tzDate.toLocaleString()}
+                    <strong>📅</strong> {p.tzDate.toLocaleString()}
                   </p>
                 </div>
               ))}

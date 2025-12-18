@@ -77,10 +77,10 @@ export default function CustomerList() {
       </div>
       <div className="space-y-3">
         {loading ? (
-          <div className="flex justify-center py-10 text-gray-500">
-            <FiLoader className="animate-spin mr-2" />
-            កំពុងផ្ទុក...
-          </div>
+        <div className="flex justify-center items-center py-10 text-gray-600">
+          <FiLoader className="animate-spin mr-2" size={26} />
+          កំពុងផ្ទុក...
+        </div>
         ) : (
           filteredCustomers.map((c) => (
             <div

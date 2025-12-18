@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import paymentApi from "../../api/paymentApi";
-import { FiUser, FiDollarSign, FiCalendar, FiFileText } from "react-icons/fi";
+import { FiLoader,FiUser, FiDollarSign, FiCalendar, FiFileText } from "react-icons/fi";
 
 const PaymentEdit = () => {
   const { id } = useParams();
@@ -54,7 +54,7 @@ const PaymentEdit = () => {
         paymentDate: new Date(form.paymentDate).toISOString(), // ISO format
         customerId: payment.customer?.id, // FK instead of nested object
       });
-      alert("✅ Payment updated successfully!");
+      alert("✅ ការកែប្រែជោគជ័យ!");
       navigate("/payments");
     } catch (err) {
       console.error("Update failed:", err.response?.data || err.message);
@@ -63,7 +63,10 @@ const PaymentEdit = () => {
   };
 
 
-  if (loading) return <div className="text-center py-10">⏳ Loading...</div>;
+  if (loading) return <div className="fixed inset-0 flex justify-center items-center bg-white bg-opacity-80 z-50">
+    <FiLoader className="animate-spin mr-2 text-gray-600" size={24} />
+    <span className="text-gray-700">កំពុងដំណើរការ...</span>
+  </div>
   if (!payment) return <div className="text-center py-10">No payment found</div>;
 
   return (
@@ -113,7 +116,7 @@ const PaymentEdit = () => {
             value={form.remark}
             onChange={handleChange}
             className="w-full border rounded px-3 py-2 focus:ring focus:ring-blue-300"
-            placeholder="Optional note..."
+            placeholder="ចំណាំ"
           />
         </div>
 

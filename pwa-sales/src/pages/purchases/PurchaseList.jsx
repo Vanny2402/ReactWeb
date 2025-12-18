@@ -74,10 +74,10 @@ export default function PurchaseList() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-10 text-gray-600">
-        <FiLoader className="animate-spin mr-2" size={22} />
-        កំពុងផ្ទុក...
-      </div>
+        <div className="flex justify-center items-center py-10 text-gray-600">
+          <FiLoader className="animate-spin mr-2" size={28} />
+          កំពុងផ្ទុក...
+        </div>
     );
   }
 

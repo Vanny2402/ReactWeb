@@ -60,7 +60,7 @@ export default function CustomerAdd() {
         <input
           type="text"
           name="address"
-          placeholder="អាស័យដ្ឋាន"
+          placeholder="ហ្វេសបុក"
           className="w-full border px-4 py-3 rounded-xl"
           value={form.address}
           onChange={handleChange}

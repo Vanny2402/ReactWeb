@@ -92,11 +92,15 @@ export default function BookingGardener() {
                       .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate)) // ✅ sort by createDate desc
                       .map((p) => {
                         const date = new Date(p.paymentDate);
-                        const formattedDate = date.toLocaleDateString("en-GB");
-                        return (
+                        const formattedDate = date.toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit"
+                        }); return (
                           <li key={p.id} className="flex justify-between">
                             <span>
                               {formattedDate.replace(/\//g, "-")} (#{p.id})
+                              <span className="text-red-400 font-bold text-[11px]">  {"\t\t"}{p.remark}</span>
                             </span>
                             <span>${formatAmount(p.amount)}</span>
                           </li>
@@ -142,7 +146,13 @@ export default function BookingGardener() {
                       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) // ✅ sort by saleDate desc
                       .map((s) => {
                         const date = new Date(s.createdAt);
-                        const formattedDate = date.toLocaleDateString("en-GB");
+
+                        // Use options to specify 2-digit year
+                        const formattedDate = date.toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit"
+                        });
                         return (
                           <li key={s.id} className="flex justify-between">
                             <span>

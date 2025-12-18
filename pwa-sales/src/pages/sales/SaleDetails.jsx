@@ -25,8 +25,8 @@ export default function SaleDetails() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-10 text-gray-500">
-        <FiLoader className="animate-spin mr-2" />
+      <div className="flex justify-center items-center h-screen text-gray-600">
+        <FiLoader className="animate-spin mr-2" size={30} />
         កំពុងផ្ទុក...
       </div>
     );
@@ -52,10 +52,10 @@ export default function SaleDetails() {
         ))}
 
         <div className="border rounded p-3 bg-gray-50 space-y-2">
-        <p>ចំនួនទឹកប្រាក់សរុប : ${sale.totalPrice}</p>
-        <p>បានបង់: ${sale.paidAmount}</p>
-        <p>ជំពាក់: ${sale.debt}</p>
-      </div>
+          <p>ចំនួនទឹកប្រាក់សរុប : ${sale.totalPrice}</p>
+          <p>បានបង់: ${sale.paidAmount}</p>
+          <p>ជំពាក់: ${sale.debt}</p>
+        </div>
       </ul>
 
       <button

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCustomerById, updateCustomer } from "../../api/customerApi";
+import { FiLoader } from "react-icons/fi";
+
 
 export default function CustomerEdit() {
   const { id } = useParams();
@@ -57,7 +59,7 @@ export default function CustomerEdit() {
     try {
       setSaving(true);
       await updateCustomer(customerId, form);
-      alert("✅ Customer updated successfully!");
+      alert("✅ កែប្រែជោគជ័យ!");
       navigate("/customers");
     } catch (err) {
       console.error(err);
@@ -67,9 +69,16 @@ export default function CustomerEdit() {
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+if (loading) {
+  return (
+    <div className="flex justify-center items-center h-screen text-gray-500">
+      <FiLoader className="animate-spin mr-2" size={24} />
+      Loading...
+    </div>
+  );
+}
   if (error) return <div className="p-4 text-red-600">{error}</div>;
-  if (!customer) return <div className="p-4">No customer found</div>;
+  if (!customer) return <div className="p-4">រកមិនឃើញអតិថិជន</div>;
 
   return (
     <div className="max-w-md mx-auto bg-white shadow rounded p-6">

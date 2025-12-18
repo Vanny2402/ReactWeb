@@ -58,11 +58,9 @@ export default function SaleList() {
 
     if (loading)
         return (
-            <div className="space-y-3">
-                <div className="flex justify-center py-10 text-gray-500">
-                    <FiLoader className="animate-spin mr-2" />
-                    កំពុងផ្ទុក...
-                </div>
+            <div className="flex justify-center items-center h-screen text-gray-600">
+                <FiLoader className="animate-spin mr-2" size={30} />
+                កំពុងផ្ទុក...
             </div>
         );
 
@@ -76,6 +74,7 @@ export default function SaleList() {
                     <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
             )}
+
 
             <div className="px-4 mt-6">
                 <h2 className="font-semibold mb-3">ប្រតិបត្តិការលក់ខែនេះ</h2>
