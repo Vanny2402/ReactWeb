@@ -34,7 +34,17 @@ import PurchaseList from "./pages/purchases/PurchaseList";
 import PurchaseAdd from "./pages/purchases/PurchaseAdd";
 import PurchaseEdit from "./pages/purchases/PurchaseEdit";
 
+import { useEffect } from "react";
+
 export default function App() {
+  useEffect(() => {
+    const handleRefresh = () => {
+      localStorage.removeItem("isLoggedIn");
+    };
+
+    window.addEventListener("beforeunload", handleRefresh);
+    return () => window.removeEventListener("beforeunload", handleRefresh);
+  }, []);
   return (
     <BrowserRouter>
       <Routes>
