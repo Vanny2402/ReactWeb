@@ -43,7 +43,7 @@ export default function App() {
         {/* App Layout */}
         <Route element={<AppLayout />}>
           {/* ✅ IMPORTANT */}
-          <Route index element={<Navigate to="/customers" replace />} />
+          <Route index element={<Navigate to="/" replace />} />
 
           {/* Customers */}
           <Route path="customers" element={<CustomerList />} />
