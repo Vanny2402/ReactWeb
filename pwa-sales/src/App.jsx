@@ -40,7 +40,6 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<Login />} />
-
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>

@@ -30,15 +30,20 @@ export default function Login() {
 
     if (userHash === validUserHash && passHash === validPassHash) {
       setError("");
-      navigate("/customers"); // ✅ redirect
+
+      // ✅ 1️⃣ SAVE LOGIN STATE
+      localStorage.setItem("isLoggedIn", "true");
+
+      // ✅ 2️⃣ NAVIGATE (replace prevents back to login)
+      navigate("/customers", { replace: true });
     } else {
       setError("លេខកូដសម្ងាត់មិនត្រឹមត្រូវ!");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 ">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 ml-4 mr-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 mx-4">
         <h2 className="text-2xl font-bold text-center mb-6">
           សូមស្វាគមន៍ 👋
         </h2>
@@ -49,6 +54,7 @@ export default function Login() {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             className="w-full px-4 py-2 border rounded-lg"
+            required
           />
 
           <input
@@ -57,6 +63,7 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             className="w-full px-4 py-2 border rounded-lg"
+            required
           />
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
