@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import AppLayout from "./layouts/AppLayout";
+import { useEffect } from "react";
 
+import AppLayout from "./layouts/AppLayout";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -34,49 +35,63 @@ import PurchaseList from "./pages/purchases/PurchaseList";
 import PurchaseAdd from "./pages/purchases/PurchaseAdd";
 import PurchaseEdit from "./pages/purchases/PurchaseEdit";
 
-import { useEffect } from "react";
-
 export default function App() {
   useEffect(() => {
     const handleRefresh = () => {
       localStorage.removeItem("isLoggedIn");
     };
-
     window.addEventListener("beforeunload", handleRefresh);
     return () => window.removeEventListener("beforeunload", handleRefresh);
   }, []);
+
+  const customerRoutes = [
+    { path: "customers", element: <CustomerList /> },
+    { path: "customers/add", element: <CustomerAdd /> },
+    { path: "customers/:id", element: <CustomerDetails /> },
+    { path: "customers/edit/:id", element: <CustomerEdit /> },
+  ];
+
+  const productRoutes = [
+    { path: "products", element: <ProductList /> },
+    { path: "products/add", element: <ProductAdd /> },
+    { path: "products/edit/:id", element: <ProductEdit /> },
+  ];
+
+  const salesRoutes = [
+    { path: "sales", element: <Sales /> },
+    { path: "sales/ProductSale", element: <ProductSale /> },
+    { path: "sales/report", element: <SaleReportPage /> },
+    { path: "sales/list", element: <SaleList /> },
+    { path: "sales/SaleDetails/:id", element: <SaleDetails /> },
+  ];
+
+  const paymentRoutes = [
+    { path: "payments", element: <PaymentList /> },
+    { path: "payments/add", element: <PaymentAdd /> },
+    { path: "payments/edit/:id", element: <PaymentEdit /> },
+    { path: "payments/add/:id", element: <PaymentAddFC /> },
+  ];
+
+  const purchaseRoutes = [
+    { path: "purchases", element: <PurchaseList /> },
+    { path: "purchases/add", element: <PurchaseAdd /> },
+    { path: "purchases/edit/:id", element: <PurchaseEdit /> },
+  ];
+
   return (
     <BrowserRouter>
       <Routes>
         {/* Public */}
         <Route path="/" element={<Login />} />
+
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="customers" element={<CustomerList />} />
-            <Route path="customers/add" element={<CustomerAdd />} />
-            <Route path="customers/:id" element={<CustomerDetails />} />
-            <Route path="customers/edit/:id" element={<CustomerEdit />} />
-
-            <Route path="products" element={<ProductList />} />
-            <Route path="products/add" element={<ProductAdd />} />
-            <Route path="products/edit/:id" element={<ProductEdit />} />
-
-            <Route path="sales" element={<Sales />} />
-            <Route path="sales/ProductSale" element={<ProductSale />} />
-            <Route path="sales/report" element={<SaleReportPage />} />
-            <Route path="sales/list" element={<SaleList />} />
-            <Route path="sales/SaleDetails/:id" element={<SaleDetails />} />
-
-            <Route path="payments" element={<PaymentList />} />
-            <Route path="payments/add" element={<PaymentAdd />} />
-            <Route path="payments/edit/:id" element={<PaymentEdit />} />
-            <Route path="payments/add/:id" element={<PaymentAddFC />} />
-
-            <Route path="purchases" element={<PurchaseList />} />
-            <Route path="purchases/add" element={<PurchaseAdd />} />
-            <Route path="purchases/edit/:id" element={<PurchaseEdit />} />
-
+            {[...customerRoutes, ...productRoutes, ...salesRoutes, ...paymentRoutes, ...purchaseRoutes].map(
+              ({ path, element }, index) => (
+                <Route key={index} path={path} element={element} />
+              )
+            )}
             <Route path="settings" element={<Settings />} />
           </Route>
         </Route>
