@@ -35,7 +35,7 @@ export default function Login() {
       localStorage.setItem("isLoggedIn", "true");
 
       // ✅ 2️⃣ NAVIGATE (replace prevents back to login)
-      navigate("/customers", { replace: true });
+      navigate("customers", { replace: true });
     } else {
       setError("លេខកូដសម្ងាត់មិនត្រឹមត្រូវ!");
     }
