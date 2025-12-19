@@ -1,26 +1,8 @@
-// import api from "./api";
-
-// export const createCustomer = (data) => api.post("/customers", data);
-// export const getCustomerById = (id) => api.get(`/customers/${id}`);
-// export const updateCustomer = (id, data) => api.put(`/customers/${id}`, data);
-// export const getAllCustomers = () => api.get("/customers");
-// export const removeCustomer = (id) => api.delete(`/customers/${id}`);
-
-// const customerApi = {
-//   createCustomer,
-//   getCustomerById,
-//   updateCustomer,
-//   getAllCustomers,
-//   removeCustomer,
-// };
-
-// export default customerApi;
-
 import api from "./api";
 
+// -------------------- Customer CRUD --------------------
 export const createCustomer = async (data) => {
   const res = await api.post("/customers", data);
-
   return res.data;
 };
 
@@ -43,10 +25,27 @@ export const removeCustomer = async (id) => {
   await api.delete(`/customers/${id}`);
 };
 
+// -------------------- New Endpoints --------------------
+
+// Get all payments by customerId
+export const getPaymentsByCustomerId = async (id) => {
+  const res = await api.get(`/customers/${id}/payments`);
+  return res.data;
+};
+
+// Get all sales by customerId
+export const getSalesByCustomerId = async (id) => {
+  const res = await api.get(`/customers/${id}/sales`);
+  return res.data;
+};
+
+// -------------------- Export --------------------
 export default {
   createCustomer,
   getCustomerById,
   updateCustomer,
   getAllCustomers,
   removeCustomer,
-}
+  getPaymentsByCustomerId,
+  getSalesByCustomerId,
+};

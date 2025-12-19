@@ -26,11 +26,15 @@ import SaleDetails from "./pages/sales/SaleDetails";
 import PaymentList from "./pages/payments/PaymentList";
 import PaymentAdd from "./pages/payments/PaymemntAdd";
 import PaymentEdit from "./pages/payments/PaymemntEdit";
+import PaymentAddFC from "./pages/payments/PaymemntAdd";
 
 // Purchases
 import PurchaseList from "./pages/purchases/PurchaseList";
 import PurchaseAdd from "./pages/purchases/PurchaseAdd";
 import PurchaseEdit from "./pages/purchases/PurchaseEdit";
+
+//Logout 
+
 
 export default function App() {
   return (
@@ -48,7 +52,7 @@ export default function App() {
           <Route path="/customers" element={<CustomerList />} />
           <Route path="/customers/add" element={<CustomerAdd />} />
           <Route path="/customers/:id" element={<CustomerDetails />} />
-          <Route path="/customers/:id/edit" element={<CustomerEdit />} />
+          <Route path="/customers/edit/:id" element={<CustomerEdit />} />
 
           {/* Products */}
           <Route path="/products" element={<ProductList />} />
@@ -66,6 +70,7 @@ export default function App() {
           <Route path="/payments" element={<PaymentList />} />
           <Route path="/payments/add" element={<PaymentAdd />} />
           <Route path="/payments/edit/:id" element={<PaymentEdit />} />
+          <Route path="/payments/add/:id" element={<PaymentAddFC />} />
 
           {/* Purchases */}
           <Route path="/purchases" element={<PurchaseList />} />

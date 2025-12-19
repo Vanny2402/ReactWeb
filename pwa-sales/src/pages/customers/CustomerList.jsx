@@ -1,10 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { FiPlus, FiLoader } from "react-icons/fi";
+import { FiPlus, FiLoader, FiEdit } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import {
-  getAllCustomers,
-  getCustomerById,
-} from "../../api/customerApi";
+import { getAllCustomers } from "../../api/customerApi";
 
 export default function CustomerList() {
   const navigate = useNavigate();
@@ -14,99 +11,105 @@ export default function CustomerList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const loadCustomers = async () => {
       try {
         const res = await getAllCustomers();
-        setCustomers(res);
-      } catch (err) {
+        if (mounted) setCustomers(res || []);
+      } catch {
         alert("មិនអាចទាញបញ្ជីអតិថិជនបានទេ!");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
+
     loadCustomers();
+    return () => (mounted = false);
   }, []);
 
-  const filteredCustomers = useMemo(
-    () =>
-      customers.filter((c) =>
-        c.name?.toLowerCase().includes(search.toLowerCase())
-      ),
-    [customers, search]
-  );
+  const filteredCustomers = useMemo(() => {
+    const q = search.toLowerCase();
+    return customers.filter(c =>
+      c.name?.toLowerCase().includes(q)
+    );
+  }, [customers, search]);
 
   const sumDebt = useMemo(
-    () =>
-      customers.reduce((sum, c) => sum + Number(c.totalDebt ?? 0), 0),
+    () => customers.reduce((s, c) => s + Number(c.totalDebt || 0), 0),
     [customers]
   );
 
-  const formatCurrency = (value) =>
+  const formatCurrency = (v) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
-    }).format(value);
-
-  // ✅ CALL CUSTOMER DETAILS ON CLICK
-  const handleClick = async (id) => {
-    try {
-      setLoading(true);
-      const customer = await getCustomerById(id);
-      navigate(`/customers/${id}`, { state: customer });
-    } catch (err) {
-      alert("មិនអាចទាញព័ត៌មានអតិថិជនបានទេ!");
-    } finally {
-      setLoading(false);
-    }
-  };
+    }).format(v || 0);
 
   return (
     <div className="p-4 mb-16">
-
       <input
         className="w-full border rounded-xl px-4 py-2 mb-4"
         placeholder="ស្វែងរក..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      {/* Balance Card */}
-      <div className="px-4 mb-4">
+
+      <div className="mb-4">
         <div className="rounded-2xl p-3 text-white bg-gradient-to-r from-indigo-500 to-purple-500 shadow">
-          <p className="text-1xl font-bold ">ប្រាក់ត្រូវទទួលសរុប: {formatCurrency(sumDebt)}</p>
+          <p className="font-bold">
+            ប្រាក់ត្រូវទទួលសរុប: {formatCurrency(sumDebt)}
+          </p>
         </div>
       </div>
-      <div className="space-y-3">
-        {loading ? (
-        <div className="flex justify-center items-center py-10 text-gray-600">
+
+      {loading ? (
+        <div className="flex justify-center py-10 text-gray-600">
           <FiLoader className="animate-spin mr-2" size={26} />
           កំពុងផ្ទុក...
         </div>
-        ) : (
-          filteredCustomers.map((c) => (
+      ) : (
+        <div className="space-y-3">
+          {filteredCustomers.map((c) => (
             <div
               key={c.id}
-              onClick={() => handleClick(c.id)}
-              className="flex justify-between items-center bg-white p-4 rounded-xl shadow cursor-pointer hover:shadow-md"
+              onClick={() =>
+                navigate(`/customers/${c.id}`, { state: c })
+              }
+              className="flex justify-between items-center bg-white p-4 rounded-xl shadow hover:shadow-md cursor-pointer"
             >
               <div>
                 <p className="font-semibold">{c.name}</p>
                 <p className="text-sm text-gray-500">{c.phone}</p>
                 <p className="text-sm text-gray-400">{c.address}</p>
               </div>
-              <p
-                className={`font-bold ${c.totalDebt > 0 ? "text-red-600" : "text-green-600"
+
+              <div className="flex items-center gap-3">
+                <p
+                  className={`font-bold ${
+                    c.totalDebt > 0 ? "text-red-600" : "text-green-600"
                   }`}
-              >
-                {formatCurrency(c.totalDebt ?? 0)}
-              </p>
+                >
+                  {formatCurrency(c.totalDebt)}
+                </p>
+
+                <FiEdit
+                  size={20}
+                  className="text-blue-600 hover:text-blue-800"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/customers/edit/${c.id}`);
+                  }}
+                />
+              </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       <button
-        onClick={() => navigate("add")}
-        className="fixed bottom-20 right-5 bg-blue-600 text-white p-4 rounded-full"
+        onClick={() => navigate("/customers/add")}
+        className="fixed bottom-20 right-5 bg-blue-600 text-white p-4 rounded-full shadow-lg"
       >
         <FiPlus size={24} />
       </button>

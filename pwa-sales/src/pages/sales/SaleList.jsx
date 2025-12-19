@@ -14,7 +14,7 @@ export default function SaleList() {
     useEffect(() => {
         const fetchSales = async () => {
             try {
-                const res = await saleApi.getAllSales();
+                const res = await saleApi.gesSaleCurrentMonth();
                 const allSales = Array.isArray(res) ? res : res.data;
 
                 const now = new Date();
@@ -29,7 +29,7 @@ export default function SaleList() {
                 setSales(filtered);
             } catch (err) {
                 console.error("Error fetching sales:", err);
-                setError("Failed to load sales");
+                setError("មានបញ្ហាក្នុងការទាញទិន្នន័យ!");
             } finally {
                 setLoading(false);
             }

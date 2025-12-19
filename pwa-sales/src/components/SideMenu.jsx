@@ -4,7 +4,8 @@ import {
   FiHome,
   FiShoppingCart,
   FiSettings,
-  FiShoppingBag,   // 👈 add this
+  FiShoppingBag,
+  FiLogOut,   // 👈 add logout icon
 } from "react-icons/fi";
 
 export default function SideMenu({ isOpen, onClose }) {
@@ -12,8 +13,9 @@ export default function SideMenu({ isOpen, onClose }) {
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${isOpen ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
+      className={`fixed inset-0 bg-black bg-opacity-30 z-50 transition-opacity ${
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
       onClick={onClose}
     >
       <div
@@ -26,10 +28,7 @@ export default function SideMenu({ isOpen, onClose }) {
           <FiX size={22} onClick={onClose} className="cursor-pointer" />
         </div>
 
-        <nav className="flex flex-col gap-4">
-          {/* <Link to="/" onClick={onClose} className={base}>
-            <FiHome size={18} /> ផ្ទាំងខាងដើម
-          </Link> */}
+        <nav className="flex flex-col gap-4 h-full">
           <NavLink
             to="/purchases"
             onClick={onClose}
@@ -44,13 +43,13 @@ export default function SideMenu({ isOpen, onClose }) {
           <Link to="/sales/report" onClick={onClose} className={base}>
             <FiShoppingCart size={18} /> ការលក់s
           </Link>
-          {/* 
-          <Link to="/settings" onClick={onClose} className={base}>
-            <FiSettings size={18} /> ការកំណត់
-          </Link> */}
 
-          {/* Purchases (NavLink with active state) */}
-
+          {/* Spacer pushes logout to bottom */}
+          <div className="">
+            <Link to="/" onClick={onClose} className={base}>
+              <FiLogOut size={18} /> ចាកចេញ
+            </Link>
+          </div>
         </nav>
       </div>
     </div>

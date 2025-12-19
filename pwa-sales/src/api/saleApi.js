@@ -5,6 +5,8 @@ export const getSaleById = (id) => api.get(`/sales/${id}`);
 export const updateSale = (id, data) => api.put(`/sales/${id}`, data);
 export const getAllSales = () => api.get("/sales");
 export const removeSale = (id) => api.delete(`/sales/${id}`);
+export const gesSaleCurrentMonth=() => api.get("/sales/current-month");
+
 
 const saleApi = {
   createSale,
@@ -12,6 +14,7 @@ const saleApi = {
   updateSale,
   getAllSales,
   removeSale,
+  gesSaleCurrentMonth,
 };
 
 export default saleApi;

@@ -72,8 +72,8 @@ export default function CustomerEdit() {
 if (loading) {
   return (
     <div className="flex justify-center items-center h-screen text-gray-500">
-      <FiLoader className="animate-spin mr-2" size={24} />
-      Loading...
+      <FiLoader className="animate-spin mr-2" size={29} />
+      កំពុងផ្ទុក...
     </div>
   );
 }
@@ -86,7 +86,7 @@ if (loading) {
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormRow label="ឈ្មោះ" name="name" value={form.name} onChange={handleChange} required />
         <FormRow label="លេខទូរស័ព្ទ" name="phone" value={form.phone} onChange={handleChange} />
-        <FormRow label="អាសយដ្ឋាន" name="address" value={form.address} onChange={handleChange} />
+        <FormRow label="ហ្វេសបុក" name="address" value={form.address} onChange={handleChange} />
         <button
           type="submit"
           disabled={saving}

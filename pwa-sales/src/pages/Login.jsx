@@ -37,10 +37,10 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 ">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8 ml-4 mr-4">
         <h2 className="text-2xl font-bold text-center mb-6">
-          Welcome Back 👋
+          សូមស្វាគមន៍ 👋
         </h2>
 
         <form onSubmit={handleLogin} className="space-y-5">
