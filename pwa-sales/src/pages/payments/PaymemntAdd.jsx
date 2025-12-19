@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import customerApi from "../../api/customerApi";
 import paymentApi from "../../api/paymentApi";
 import "./PaymentList.css";
+import { useLocation } from "react-router-dom";
+
 
 // Utility: format date for datetime-local input
 const formatDateForInput = (date) => {
@@ -15,7 +17,6 @@ const formatDateForInput = (date) => {
     minute: "2-digit",
     hour12: false,
   };
-
   const parts = new Intl.DateTimeFormat("en-GB", options).formatToParts(date);
   const get = (type) => parts.find((p) => p.type === type).value;
 
@@ -30,20 +31,31 @@ const FormGroup = ({ label, children }) => (
   </div>
 );
 
+
+
 const PaymentAdd = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const { state } = useLocation(); 
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [formData, setFormData] = useState({
-    customerId: id || "",
-    amount: "",
-    paymentDate: formatDateForInput(new Date()),
-    remark: "",
-  });
+  // const [formData, setFormData] = useState({
+  //   customerId: id || "",
+  //   amount: "",
+  //   paymentDate: formatDateForInput(new Date()),
+  //   remark: "",
+  // });
+
+const [formData, setFormData] = useState({
+  customerId: id || "",
+  amount: state?.amount ?? "", // ✅ auto-fill once
+  paymentDate: formatDateForInput(new Date()),
+  remark: "",
+});
+
 
   // Fetch customers
   useEffect(() => {

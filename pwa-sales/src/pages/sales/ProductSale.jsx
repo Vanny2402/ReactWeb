@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/solid";
 import { FiLoader } from "react-icons/fi";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import saleApi from "../../api/saleApi";
 import { getAllProducts } from "../../api/productApi";
@@ -10,135 +11,102 @@ import { getAllCustomers } from "../../api/customerApi";
 export default function ProductSale() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
-  // Read query params correctly
-  const query = new URLSearchParams(location.search);
-  const productId = query.get("productId");
-  const customerId = query.get("customerId");
+  /* ================= URL PARAMS ================= */
+  const params = new URLSearchParams(location.search);
+  const defaultProductId = params.get("productId") || "";
+  const defaultCustomerId = params.get("customerId") || "";
 
-  const [products, setProducts] = useState([]);
-  const [customers, setCustomers] = useState([]);
+  /* ================= STATE ================= */
   const [cartItems, setCartItems] = useState([]);
+  const [customerLocked, setCustomerLocked] = useState(false);
 
   const [form, setForm] = useState({
-    productId: "",
-    customerId: "",
+    productId: defaultProductId,
+    customerId: defaultCustomerId,
     qty: "",
     price: "",
     paidAmount: "",
     remark: "",
   });
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [customerLocked, setCustomerLocked] = useState(false);
-  const [error, setError] = useState(null);
+  /* ================= QUERIES ================= */
+  const { data: products = [], isLoading: loadingProducts } = useQuery({
+    queryKey: ["products"],
+    queryFn: getAllProducts,
+  });
 
-  /* ---------------- LOAD DATA ---------------- */
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
+  const { data: customers = [], isLoading: loadingCustomers } = useQuery({
+    queryKey: ["customers"],
+    queryFn: getAllCustomers,
+  });
 
-        const [pRes, cRes] = await Promise.all([
-          getAllProducts(),
-          getAllCustomers(),
-        ]);
+  const loading = loadingProducts || loadingCustomers;
 
-        setProducts(Array.isArray(pRes) ? pRes : []);
-        setCustomers(Array.isArray(cRes) ? cRes : []);
+  /* ================= FORM HANDLERS ================= */
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-        // Auto-select customer
-        if (customerId) {
-          setForm(f => ({ ...f, customerId }));
-          setCustomerLocked(true);
-        }
-
-        // Auto-select product
-        if (productId) {
-          const p = pRes.find(x => x.id === Number(productId));
-          if (p) {
-            setForm(f => ({
-              ...f,
-              productId: p.id,
-              price: p.price,
-            }));
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        setError("មិនអាចទាញទិន្នន័យបានទេ");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, [productId, customerId]);
-
-  /* ---------------- FORM CHANGE ---------------- */
-  const handleChange = useCallback(
+  const handleProductChange = useCallback(
     (e) => {
-      const { name, value } = e.target;
+      const value = e.target.value;
+      const product = products.find((p) => p.id === Number(value));
 
-      setForm(prev => {
-        const next = { ...prev, [name]: value };
-
-        if (name === "productId") {
-          const p = products.find(x => x.id === Number(value));
-          next.price = p ? p.price : "";
-        }
-
-        return next;
-      });
+      setForm((prev) => ({
+        ...prev,
+        productId: value,
+        price: product ? product.price : "",
+      }));
     },
     [products]
   );
 
-  /* ---------------- ADD TO CART ---------------- */
+  /* ================= CART ================= */
   const handleAddToCart = () => {
-    if (!form.customerId) return alert("សូមជ្រើសរើសអតិថិជន");
+    if (!form.customerId)
+      return alert("សូមជ្រើសរើសអតិថិជន");
+
     if (!form.productId || !form.qty || !form.price)
       return alert("សូមបញ្ចូល ផលិតផល ចំនួន និង តម្លៃ!");
 
-    const product = products.find(p => p.id === Number(form.productId));
+    const product = products.find(
+      (p) => p.id === Number(form.productId)
+    );
     if (!product) return;
 
-    if (product.stock === 0) {
-      return alert(`ផលិតផល "${product.name}" អស់ពីស្តុកហើយ!`);
-    }
-
     const qty = Number(form.qty);
-    const price = Number(form.price);
+    if (product.stock === 0)
+      return alert(`ផលិតផល "${product.name}" អស់ពីស្តុកហើយ!`);
 
-    if (qty > product.stock) {
-      return alert(`ចំនួនស្តុកមានត្រឹមតែ ${product.stock} ប៉ុណ្ណោះ!`);
-    }
+    if (qty > product.stock)
+      return alert(`ចំនួនស្តុកមានត្រឹមតែ ${product.stock}`);
 
-    setCartItems(prev => [
+    setCartItems((prev) => [
       ...prev,
       {
         product: { id: product.id, name: product.name },
         qty,
-        price,
-        lineTotal: qty * price,
+        price: Number(form.price),
+        lineTotal: qty * Number(form.price),
       },
     ]);
 
     setCustomerLocked(true);
-    setForm(f => ({ ...f, qty: "" }));
+    setForm((f) => ({ ...f, qty: "" }));
   };
 
-  /* ---------------- REMOVE ITEM ---------------- */
-  const handleRemove = index => {
-    setCartItems(prev => {
+  const handleRemove = (index) => {
+    setCartItems((prev) => {
       const next = prev.filter((_, i) => i !== index);
       if (next.length === 0) setCustomerLocked(false);
       return next;
     });
   };
 
-  /* ---------------- TOTALS ---------------- */
+  /* ================= TOTALS ================= */
   const total = useMemo(
     () => cartItems.reduce((s, i) => s + i.lineTotal, 0),
     [cartItems]
@@ -147,54 +115,67 @@ export default function ProductSale() {
   const paid = Number(form.paidAmount || 0);
   const debt = total - paid;
 
-  /* ---------------- SAVE ---------------- */
-  const handleSave = async () => {
-    if (!form.customerId || cartItems.length === 0)
-      return alert("សូមបញ្ចូលទៅក្នុងកន្ត្រកជាមុន!");
+  /* ================= SAVE SALE ================= */
+  const saveMutation = useMutation({
+    mutationFn: saleApi.createSale,
 
-    if (paid < 0 || paid > total)
-      return alert("ទឹកប្រាក់បង់មិនត្រឹមត្រូវ");
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["sales", "current-month"],
+        refetchType: "active", // force refetch immediately
+      });
 
-    const payload = {
+      navigate("/sales/list", { replace: true });
+    },
+
+    onError: (err) => {
+      console.error(err);
+      alert("បរាជ័យ");
+    },
+  });
+
+  const handleSave = () => {
+    //No items in cart
+    if (cartItems.length === 0) {
+      alert("សូមបន្ថែមយ៉ាងហោចណាស់ ១ ផលិតផលទៅកន្ត្រក");
+      return;
+    }
+    //No customer
+    if (!form.customerId) {
+      alert("សូមជ្រើសរើសអតិថិជន");
+      return;
+    }
+    //invalid paid amount (optional safety)
+    if (Number(form.paidAmount || 0) < 0) {
+      alert("ទឹកប្រាក់បង់ មិនត្រឹមត្រូវ");
+      return;
+    }
+    saveMutation.mutate({
       customer: { id: Number(form.customerId) },
-      paidAmount: paid,
+      paidAmount: Number(form.paidAmount || 0),
       remark: form.remark,
-      items: cartItems.map(i => ({
+      items: cartItems.map((i) => ({
         product: { id: i.product.id },
         qty: i.qty,
         price: i.price,
       })),
-    };
+    });
 
-    try {
-      setSaving(true);
-      await saleApi.createSale(payload);
-      alert("រក្សាទុកជោគជ័យ");
-      navigate(`/customers/${form.customerId}`);
-    } catch (err) {
-      console.error(err);
-      alert("បរាជ័យ");
-    } finally {
-      setSaving(false);
-    }
   };
 
-  /* ---------------- UI ---------------- */
-  if (loading)
+  /* ================= UI ================= */
+  if (loading) {
     return (
-      <div className="space-y-3">
-        <div className="flex justify-center py-10 text-gray-500">
-          <FiLoader className="animate-spin mr-2" />
-          កំពុងផ្ទុក...
-        </div>
+      <div className="flex justify-center py-10 text-gray-500">
+        <FiLoader className="animate-spin mr-2" />
+        កំពុងផ្ទុក...
       </div>
     );
-
-  if (error) return <div className="p-4 text-red-600">{error}</div>;
+  }
 
   return (
     <div className="p-4 max-w-lg mx-auto space-y-4">
-      <SelectRow
+      <CustSelect
         label="អតិថិជន"
         name="customerId"
         value={form.customerId}
@@ -207,7 +188,7 @@ export default function ProductSale() {
         label="ផលិតផល"
         name="productId"
         value={form.productId}
-        onChange={handleChange}
+        onChange={handleProductChange}
         options={products}
       />
 
@@ -226,39 +207,62 @@ export default function ProductSale() {
         <CartTable items={cartItems} onRemove={handleRemove} total={total} debt={debt} />
       )}
 
-      <InputRow label="ទឹកប្រាក់បង់" name="paidAmount" value={form.paidAmount} onChange={handleChange} />
-      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} />
+      <InputRow
+        label="ទឹកប្រាក់បង់"
+        name="paidAmount"
+        value={form.paidAmount}
+        onChange={handleChange}
+      />
+      <InputRow
+        label="ចំណាំ"
+        name="remark"
+        value={form.remark}
+        onChange={handleChange}
+      />
 
       <button
         onClick={handleSave}
-        disabled={saving}
-        className="w-full bg-green-600 text-white py-2 rounded"
+        disabled={saveMutation.isPending}
+        className="w-full bg-green-600 text-white py-2 rounded disabled:opacity-50"
       >
-        {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
-      </button>
-
-      <button
-        onClick={() => navigate(`/customers/${form.customerId}`)}
-        className="w-full bg-gray-500 text-white py-2 rounded"
-      >
-        ⬅️ ត្រឡប់ទៅអតិថិជន
+        {saveMutation.isPending ? "កំពុងរក្សាទុក..." : "យល់ព្រម​"}
       </button>
     </div>
   );
 }
 
-/* ---------------- REUSABLE COMPONENTS ---------------- */
+/* ================= REUSABLE ================= */
 
-function SelectRow({ label, options = [], ...props }) {
-  const safeOptions = Array.isArray(options) ? options : [];
-
+function CustSelect({ label, options = [], ...props }) {
   return (
     <div className="flex gap-3">
       <label className="w-32">{label}</label>
       <select {...props} className="flex-1 border rounded px-3 py-2">
         <option value="">ជ្រើសរើស</option>
-        {safeOptions.map(o => (
-          <option key={o.id} value={o.id}>{o.name}</option>
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function SelectRow({ label, options = [], ...props }) {
+  return (
+    <div className="flex gap-3">
+      <label className="w-32">{label}</label>
+      <select {...props} className="flex-1 border rounded px-3 py-2">
+        <option value="">ជ្រើសរើស</option>
+        {options.map((o) => (
+          <option
+            key={o.id}
+            value={o.id}
+            style={{ color: o.stock === 0 ? "red" : "black" }}
+          >
+            {o.name} ({o.stock})
+          </option>
         ))}
       </select>
     </div>
@@ -306,13 +310,13 @@ function CartTable({ items, onRemove, total, debt }) {
 
         <tr className="font-semibold bg-gray-50">
           <td colSpan="3" className="text-right pr-4">សរុប:</td>
-          <td className="text-right pr-4 text-red-600 font-semibold">{total}</td>
+          <td className="text-right pr-4 text-red-600">{total}</td>
           <td />
         </tr>
 
         <tr className="bg-gray-50">
           <td colSpan="3" className="text-right pr-4">ជំពាក់:</td>
-          <td className="text-right pr-4 text-red-600 font-semibold">{debt}</td>
+          <td className="text-right pr-4 text-red-600">{debt}</td>
           <td />
         </tr>
       </tbody>

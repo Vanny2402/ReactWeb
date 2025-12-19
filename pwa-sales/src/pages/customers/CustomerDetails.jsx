@@ -111,8 +111,8 @@ export default function CustomerDetails() {
                 key={t.id}
                 onClick={() => setActiveTab(t.id)}
                 className={`flex-1 py-2 text-sm font-medium rounded-md transition ${activeTab === t.id
-                    ? "bg-white text-indigo-600 shadow"
-                    : "text-gray-500"
+                  ? "bg-white text-indigo-600 shadow"
+                  : "text-gray-500"
                   }`}
               >
                 {t.label}
@@ -212,7 +212,7 @@ export default function CustomerDetails() {
           )}
 
           {/* CTA */}
-          <button
+          {/* <button
             onClick={() =>
               activeTab === "payment"
                 ? navigate(`/payments/add/${customer?.id}`)
@@ -221,7 +221,23 @@ export default function CustomerDetails() {
             className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-4"
           >
             {activeTab === "payment" ? "បង់ប្រាក់បន្ថែម" : "លក់បន្ថែម"}
+          </button> */}
+
+          <button
+            onClick={() =>
+              activeTab === "payment"
+                ? navigate(`/payments/add/${customer?.id}`, {
+                  state: {
+                    amount: customer?.totalDebt, // 👈 pass debt
+                  },
+                })
+                : navigate(`/sales/ProductSale?customerId=${customer?.id}`)
+            }
+            className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-4"
+          >
+            {activeTab === "payment" ? "បង់ប្រាក់បន្ថែម" : "លក់បន្ថែម"}
           </button>
+
 
         </div>
       </div>

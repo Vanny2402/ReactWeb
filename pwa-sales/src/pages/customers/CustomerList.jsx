@@ -103,7 +103,7 @@ export default function CustomerList() {
                 />
               </div>
             </div>
-          ))}
+          ))} 
         </div>
       )}
 

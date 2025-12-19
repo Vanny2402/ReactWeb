@@ -8,6 +8,9 @@ export default function ProductList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
+
+
+
   const nav = useNavigate();
 
   useEffect(() => {
@@ -36,9 +39,12 @@ export default function ProductList() {
 
   }
 
+  // ✅ Filter by name OR type
   const filteredProducts = products.filter((p) =>
-    (p.name || "").toLowerCase().includes(search.toLowerCase())
+    (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
+    (p.productType || "").toLowerCase().includes(search.toLowerCase())
   );
+
 
   return (
     <div className="p-4 pb-24">
@@ -46,7 +52,7 @@ export default function ProductList() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <input
           type="text"
-          placeholder="ស្វែងរកតាមឈ្មោះផលិតផល..."
+          placeholder="ស្វែងរកតាមឈ្មោះ ឬ ប្រភេទផលិតផល..."
           className="w-full md:w-1/2 border px-4 py-2 rounded-xl shadow-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -55,7 +61,7 @@ export default function ProductList() {
         {/* ✅ Stock In / Stock Out */}
         <div className="flex gap-6 text-sm font-semibold text-gray-700">
           <span>
-            តម្លៃចូលសរុប:{" "}
+            តម្លៃទិញចូលសរុប:{" "}
             <span className="text-green-600">
               {products.reduce(
                 (acc, p) => acc + (p.purchasePrice || 0) * (p.stock || 0),
@@ -126,29 +132,25 @@ function ProductCard({ product, Purchase, Sale }) {
       </button>
 
       {/* Product Name */}
-      <h2 className="text-lg font-bold mb-2">{product.name}</h2>
+      <h2 className="text-lg font-bold mb-2">{product.name}  ({product.productType})</h2>
 
       {/* Product Details */}
       <div className="text-sm text-gray-600 space-y-1">
         <p className="flex items-center justify-between">
           <span className="font-semibold">ចំនួនស្តុក:</span>
           <span
-            className={`px-1 py-1 rounded text-white ${
-              product.stock > 10
+            className={`px-1 py-1 rounded text-white ${product.stock > 10
                 ? "bg-green-600"
                 : product.stock > 0
-                ? "bg-yellow-500"
-                : "bg-red-600"
-            }`}
+                  ? "bg-yellow-500"
+                  : "bg-red-600"
+              }`}
           >
-          {product.stock}
+            {product.stock}
           </span>
           <span className="ml-40 font-semibold">
             {formatPrice(product.price)}
           </span>
-        </p>
-        <p>
-          <span className="font-semibold">ប្រភេទ:</span> {product.productType}
         </p>
       </div>
 
