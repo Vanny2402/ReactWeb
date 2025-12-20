@@ -158,7 +158,7 @@ function ProductCard({ product, Purchase, Sale ,onEdit}) {
           onClick={() => Purchase(product.id)}
           className="flex-1 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition"
         >
-          Purchase
+          ទិញចូល
         </button>
          <button
           onClick={() => Sale(product.id)}
