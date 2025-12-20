@@ -52,7 +52,6 @@ export default function ProductModify() {
     setSaving(true);
     try {
       await updateProduct(id, form);
-      alert("ទំនិញត្រូវបានកែប្រែដោយជោគជ័យ!");
       navigate("/products");
     } catch (err) {
       console.error(err);

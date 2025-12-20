@@ -7,6 +7,8 @@ export default function ProductAdd() {
 
   const [name, setName] = useState("");
   const [productColor, setProductColor] = useState("");
+  const [purchasePrice, setPriceIn] = useState("");
+  const [price, setSalePrice] = useState("");
   const [productType, setProductType] = useState("");
   const [remark, setRemark] = useState("");
   const [loading, setLoading] = useState(false);
@@ -14,20 +16,19 @@ export default function ProductAdd() {
   async function handleSave(e) {
     e.preventDefault();
     setLoading(true);
-
-    // ✅ Validate productType before saving
     if (!productType) {
       alert("សូមជ្រើសរើសប្រភេទទំនិញ!");
       setLoading(false);
       return;
     }
-
     try {
       await createProduct({
         name,
         productColor,
         productType,
         remark,
+        purchasePrice,
+        price,
       });
 
       nav("/products");
@@ -44,7 +45,6 @@ export default function ProductAdd() {
       <h1 className="text-xl font-bold mb-4">បង្កើតផលិតផលថ្មី</h1>
 
       <form className="space-y-3" onSubmit={handleSave}>
-
         <input
           type="text"
           placeholder="ឈ្មោះផលិតផល"
@@ -54,6 +54,23 @@ export default function ProductAdd() {
           required
         />
 
+        <input
+          type="text"
+          placeholder="តម្លៃទិញចូល"
+          className="w-full border px-4 py-3 rounded-xl"
+          value={purchasePrice}
+          onChange={(e) => setPriceIn(e.target.value)}
+          required
+        />
+        
+        <input
+          type="text"
+          placeholder="តម្លៃលក់ចេញ"
+          className="w-full border px-4 py-3 rounded-xl"
+          value={price}
+          onChange={(e) => setSalePrice(e.target.value)}
+          required
+        />
         <input
           type="text"
           placeholder="ពណ៌ផលិតផល"

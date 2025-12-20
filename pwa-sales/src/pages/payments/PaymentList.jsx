@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import paymentApi from "../../api/paymentApi";
 import { FiLoader, FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
 import "./PaymentList.css";
+import { format2Digit,formatDateAMPM } from "../../utils/formatAmount";
 
 /* Convert backend date → Cambodia timezone */
 const toCambodiaDate = (dateStr) =>
@@ -16,6 +17,7 @@ const PaymentList = () => {
   const [payments, setPayments] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+
 
   /* ===================== LOAD DATA ===================== */
   useEffect(() => {
@@ -56,7 +58,6 @@ const PaymentList = () => {
         p.id?.toString().includes(value)
     );
   }, [payments, search]);
-
   /* ===================== TOTAL ===================== */
   const totalAmount = useMemo(
     () =>
@@ -83,7 +84,6 @@ const PaymentList = () => {
       setLoading(false);
     }
   }, []);
-
   /* ===================== UI ===================== */
   return (
     <div className="payment-list">
@@ -104,7 +104,7 @@ const PaymentList = () => {
       />
 
       {/* TOTAL */}
-      <div className="monthly-total">
+      <div className="monthly-total mt-2">
         <strong>ប្រាក់បានទទួលសរុប: ${totalAmount.toFixed(2)}</strong>
       </div>
 
@@ -115,46 +115,53 @@ const PaymentList = () => {
           <p>មិនមានការបង់ប្រាក់ទេ</p>
         </div>
       ) : (
-        <div className="card-list">
+        <div className="card-list mt-1">
           {filteredPayments.map((p) => (
-            <div key={p.id} className="payment-card">
+            <div key={p.id} className="payment-card mt-1">
               <div className="card-header">
                 <h3 className="customer-name text-blue-500">
-                  #{p.id} / {p.customer?.name} 
+                  #{p.id} / {p.customer?.name}
                 </h3>
-
                 <div className="inline-actions">
+                  {/* DELETE */}
                   <button
                     onClick={() => handleDelete(p.id)}
-                    className="icon-btn delete-icon"
+                    disabled={p.remark?.startsWith("បង់ជាមួយការទិញ#")}
+                    className={`icon-btn delete-icon ${p.remark?.startsWith("បង់ជាមួយការទិញ#")? "opacity-40 cursor-not-allowed" : ""
+                      }`}
+                    title={p.remark?.startsWith("បង់ជាមួយការទិញ#") ? "មិនអាចលុបបានទេ (Auto Payment)" : "លុប"}
                   >
                     <FiTrash2 size={16} />
                   </button>
 
-                  <Link
-                    to={`/payments/edit/${p.id}`}
-                    className="icon-btn edit-icon"
-                  >
-                    <FiEdit size={16} />
-                  </Link>
+                  {/* EDIT */}
+                  {p.remark?.startsWith("បង់ជាមួយការទិញ#") ? (
+                    <button
+                      disabled
+                      className="icon-btn edit-icon opacity-30 cursor-not-allowed"
+                      title="មិនអាចកែប្រែបានទេ (Auto Payment)"
+                    >
+                      <FiEdit size={16} />
+                    </button>
+                  ) : (
+                    <Link
+                      to={`/payments/edit/${p.id}`}
+                      className="icon-btn edit-icon"
+                      title="កែប្រែ"
+                    >
+                      <FiEdit size={16} />
+                    </Link>
+                  )}
                 </div>
               </div>
-
-              <p className="flex justify-between">
-                {/* <span className="font-semibold">{p.remark}</span> */}
-                <span className="font-bold mr-3">💵 ${p.amount}</span> 
+              <p className="flex justify-between"> 
+                <span className="font-bold mr-1">💵ទឹកប្រាក់បង់:   ${format2Digit(p.amount)}</span>
               </p>
 
               <p>
                 <strong>📅</strong>{" "}
-                {p.tzDate.toLocaleString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}      {p.remark}
+                {formatDateAMPM (p.paymentDate)}
+                 {p.remark}
               </p>
             </div>
           ))}

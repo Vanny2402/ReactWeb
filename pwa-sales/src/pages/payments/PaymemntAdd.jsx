@@ -4,25 +4,25 @@ import customerApi from "../../api/customerApi";
 import paymentApi from "../../api/paymentApi";
 import "./PaymentList.css";
 import { useLocation } from "react-router-dom";
+import {formatDateForInput} from "../../utils/formatAmount";
+
 
 
 // Utility: format date for datetime-local input
-const formatDateForInput = (date) => {
-  const options = {
-    timeZone: "Asia/Phnom_Penh",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  };
-  const parts = new Intl.DateTimeFormat("en-GB", options).formatToParts(date);
-  const get = (type) => parts.find((p) => p.type === type).value;
-
-  return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
-};
-
+// const formatDateForInput = (date) => {
+//   const options = {
+//     timeZone: "Asia/Phnom_Penh",
+//     year: "numeric",
+//     month: "2-digit",
+//     day: "2-digit",
+//     hour: "2-digit",
+//     minute: "2-digit",
+//     hour12: false,
+//   };
+//   const parts = new Intl.DateTimeFormat("en-GB", options).formatToParts(date);
+//   const get = (type) => parts.find((p) => p.type === type).value;
+//   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
+// };
 // Reusable form group (label + input/select)
 const FormGroup = ({ label, children }) => (
   <div className="form-group">
@@ -31,50 +31,91 @@ const FormGroup = ({ label, children }) => (
   </div>
 );
 
-
-
 const PaymentAdd = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const { state } = useLocation(); 
+  const { state } = useLocation();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // const [formData, setFormData] = useState({
-  //   customerId: id || "",
-  //   amount: "",
-  //   paymentDate: formatDateForInput(new Date()),
-  //   remark: "",
-  // });
+  const [formData, setFormData] = useState({
+    customerId: id || "",
+    amount: state?.amount ?? "",
+    paymentDate: formatDateForInput(new Date()),
+    remark: "",
+  });
 
-const [formData, setFormData] = useState({
-  customerId: id || "",
-  amount: state?.amount ?? "", // ✅ auto-fill once
-  paymentDate: formatDateForInput(new Date()),
-  remark: "",
-});
+  const fetchCustomerDebt = async (customerId) => {
+    if (!customerId) return 0;
+    try {
+      const data = await customerApi.getCustomerById(customerId); // Make sure API returns totalDebt
+      const debt = data.totalDebt || 0;
+      setTotalDebt(debt); // store in state
+      return debt;
+    } catch (err) {
+      console.error("Failed to fetch customer debt", err);
+      setTotalDebt(0);
+      return 0;
+    }
+  };
 
-
+  const [totalDebt, setTotalDebt] = useState(0);
   // Fetch customers
   useEffect(() => {
     customerApi
       .getAllCustomers()
-      .then((data) => setCustomers(Array.isArray(data) ? data : []))
+      .then((data) => {
+        const customerList = Array.isArray(data) ? data : [];
+        setCustomers(customerList);
+        // If there's an initial customerId (from URL param or state), fetch their debt
+        if (formData.customerId) {
+          const initialCustomer = customerList.find(
+            (c) => c.id === parseInt(formData.customerId, 10)
+          );
+          if (initialCustomer) {
+            fetchCustomerDebt(formData.customerId).then((debt) =>
+              setFormData((prev) => ({ ...prev, amount: debt }))
+            );
+          }
+        }
+      })
       .catch(() => setError("មិនអាចទាញយកអតិថិជនបានទេ!"));
   }, []);
 
   // Handle input changes
   const handleChange = ({ target: { name, value } }) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let val = value;
+
+    // Validate amount
+    if (name === "amount") {
+      if (Number(val) > totalDebt) {
+        setError(`❌ ទឹកប្រាក់បង់មិនអាចលើស ${totalDebt} បានទេ!`);
+        val = totalDebt; 
+      } else {
+        setError("");
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: val }));
+    // Auto-fill amount when changing customer
+    if (name === "customerId") {
+      fetchCustomerDebt(val).then((debt) =>
+        setFormData((prev) => ({ ...prev, amount: debt }))
+      );
+    }
   };
 
-  // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
+
+    if (Number(formData.amount) > totalDebt) {
+      setError(`មិនអាចបង់ប្រាក់លើស ${totalDebt} បានទេ!`);
+      return;
+    }
+    setLoading(true);
 
     try {
       const payload = {
@@ -85,7 +126,7 @@ const [formData, setFormData] = useState({
       };
 
       await paymentApi.createPayment(payload);
-      alert("ការបង់ប្រាក់បានបន្ថែមដោយជោគជ័យ!");
+      // alert("ការបង់ប្រាក់បានបន្ថែមដោយជោគជ័យ!");
       navigate("/payments");
     } catch (err) {
       console.error(err);
@@ -95,13 +136,13 @@ const [formData, setFormData] = useState({
     }
   };
 
+
   return (
     <div className="payment-add">
       <form onSubmit={handleSubmit} className="form-card">
         {error && <p className="error-text">{error}</p>}
-
-        <FormGroup label="អតិថិជន">
-          <select
+        <FormGroup label="អតិថិជន" >
+          <select className="w-full border rounded-xl pl-4 pr-3 py-2"
             name="customerId"
             value={formData.customerId}
             onChange={handleChange}
@@ -117,8 +158,8 @@ const [formData, setFormData] = useState({
           </select>
         </FormGroup>
 
-        <FormGroup label="ទឹកប្រាក់">
-          <input
+        <FormGroup label="ទឹកប្រាក់$">
+          <input className="w-full border rounded-xl pl-4 pr-3 py-2"
             type="number"
             name="amount"
             value={formData.amount}
@@ -131,16 +172,15 @@ const [formData, setFormData] = useState({
 
         <div className="form-row">
           <FormGroup label="កាលបរិច្ឆេទ">
-            <input
+            <input className="w-full border rounded-xl pl-4 pr-3 py-2"
               type="datetime-local"
               name="paymentDate"
               value={formData.paymentDate}
               onChange={handleChange}
             />
           </FormGroup>
-
           <FormGroup label="ចំណាំ">
-            <input
+            <input className="w-full border rounded-xl pl-4 pr-3 py-2"
               type="text"
               name="remark"
               value={formData.remark}
@@ -156,5 +196,4 @@ const [formData, setFormData] = useState({
     </div>
   );
 };
-
 export default PaymentAdd;

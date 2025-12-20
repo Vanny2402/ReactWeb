@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,8 @@ import saleApi from "../../api/saleApi";
 import PageShell from "../../components/PageShell";
 
 export default function SaleList() {
+  const [search, setSearch] = useState("");
+
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   /* ================= FETCH SALES ================= */
@@ -14,7 +16,7 @@ export default function SaleList() {
     data: sales = [],
     isLoading,
     isError,
-    isFetching,   // 👈 ADD THIS
+    isFetching,  
   } = useQuery({
     queryKey: ["sales", "current-month"],
     queryFn: async () => {
@@ -64,15 +66,28 @@ export default function SaleList() {
     },
   });
 
-  /* ================= DERIVED DATA ================= */
-  const totalAmount = useMemo(
-    () =>
-      sales.reduce(
-        (sum, s) => sum + Number(s.totalPrice || 0),
-        0
-      ),
-    [sales]
-  );
+/* ================= DERIVED DATA ================= */
+const totalAmount = useMemo(
+  () =>
+    sales.reduce(
+      (sum, s) => sum + Number(s.totalPrice || 0),
+      0
+    ),
+  [sales]
+);
+  /* ================= searchLogic ================= */
+  const filteredSales = useMemo(() => {
+    if (!search.trim()) return sales;
+
+    const keyword = search.toLowerCase();
+
+    return sales.filter((s) => {
+      return (
+        String(s.id).includes(keyword) ||
+        s.customerName?.toLowerCase().includes(keyword)
+      );
+    });
+  }, [sales, search]);
 
   /* ================= HANDLERS ================= */
   const openSale = useCallback(
@@ -106,8 +121,6 @@ export default function SaleList() {
       </p>
     );
   }
-  console.log("SaleList rendered", sales.length);
-
   /* ================= UI ================= */
   return (
     <PageShell>
@@ -127,11 +140,8 @@ export default function SaleList() {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4">
-        {/* <button className="p-2 rounded hover:bg-gray-100">☰</button> */}
         <h1 className="text-lg font-bold">ប្រតិបត្តិការលក់</h1>
-        {/* <button className="p-2 rounded hover:bg-gray-100">✕</button> */}
       </div>
 
       {/* Total card */}
@@ -146,7 +156,13 @@ export default function SaleList() {
 
       {/* Sale list */}
       <div className="px-4 mt-4 space-y-3 pb-28">
-        {sales.map((s) => (
+        <input
+          className="w-full border rounded-xl pl-4 pr-3 py-2"
+          placeholder="ស្វែងរក..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        {filteredSales.map((s) => (
           <div
             key={s.id}
             onClick={() => openSale(s.id)}
@@ -160,7 +176,7 @@ export default function SaleList() {
 
             <div className="flex-1">
               <p className="font-semibold text-sm">
-                {s.customerName} #{s.id}
+                #{s.id}/ {s.customerName}
               </p>
               <p className="text-xs text-gray-500">
                 {new Date(s.createdAt).toLocaleString()}
@@ -186,11 +202,12 @@ export default function SaleList() {
         ))}
 
 
-        {sales.length === 0 && (
+        {filteredSales.length === 0 && (
           <p className="text-center text-gray-500 text-sm">
-            មិនមានទិន្នន័យក្នុងខែនេះទេ
+            មិនមានទិន្នន័យដែលត្រូវនឹងការស្វែងរកទេ
           </p>
         )}
+
       </div>
 
       {/* Floating add */}

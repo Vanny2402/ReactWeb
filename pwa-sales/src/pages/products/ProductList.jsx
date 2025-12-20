@@ -8,9 +8,6 @@ export default function ProductList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-
-
-
   const nav = useNavigate();
 
   useEffect(() => {
@@ -31,9 +28,11 @@ export default function ProductList() {
 
 
   function handlePurchas(id) {
-    nav(`/products/edit/${id}?mode=1`);
+      nav(`/purchases/add?productId=${id}`);
   }
-
+  function handleEdit(id) {
+      nav(`/products/edit/${id}`);
+  }
   function handleSale(id) {
     nav(`/sales/ProductSale?productId=${id}`);
 
@@ -44,8 +43,6 @@ export default function ProductList() {
     (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
     (p.productType || "").toLowerCase().includes(search.toLowerCase())
   );
-
-
   return (
     <div className="p-4 pb-24">
       {/* ✅ Search Bar + Stock In/Out */}
@@ -95,6 +92,8 @@ export default function ProductList() {
               product={p}
               Purchase={handlePurchas}
               Sale={handleSale}
+              onEdit={handleEdit}         // NEW: pass edit handler
+
             />
           ))}
         </div>
@@ -112,8 +111,7 @@ export default function ProductList() {
 
 }
 
-function ProductCard({ product, Purchase, Sale }) {
-  // Format price with currency
+function ProductCard({ product, Purchase, Sale ,onEdit}) {
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -125,7 +123,7 @@ function ProductCard({ product, Purchase, Sale }) {
     <div className="bg-white shadow-md rounded-xl p-4 hover:shadow-lg transition border relative">
       {/* Edit Icon */}
       <button
-        onClick={() => Purchase(product.id)}
+        onClick={() => onEdit(product.id)}  // ✅ call edit handler
         className="absolute top-3 right-3 text-blue-600 hover:text-blue-800"
       >
         <FiEdit size={20} />
@@ -157,6 +155,12 @@ function ProductCard({ product, Purchase, Sale }) {
       {/* Action Buttons */}
       <div className="mt-3 flex gap-2">
         <button
+          onClick={() => Purchase(product.id)}
+          className="flex-1 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition"
+        >
+          Purchase
+        </button>
+         <button
           onClick={() => Sale(product.id)}
           className="flex-1 bg-indigo-500 text-white py-2 rounded-lg hover:bg-indigo-600 transition"
         >

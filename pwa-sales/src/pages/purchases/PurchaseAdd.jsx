@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPurchase } from "../../api/purchaseApi.js";
 import { getAllProducts } from "../../api/productApi.js";
 import moment from "moment-timezone";
@@ -9,6 +9,8 @@ export default function PurchaseAdd() {
   const [cartItems, setCartItems] = useState([]);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const initialProductSet = useRef(false);
 
   const [form, setForm] = useState({
     supplier: "",
@@ -25,30 +27,48 @@ export default function PurchaseAdd() {
     (async () => {
       try {
         const res = await getAllProducts();
-        setProducts(res || []); // ✅ assume API returns array
+        setProducts(res || []);
+
+        // Auto-select product if productId passed in query
+        if (!initialProductSet.current) {
+          const params = new URLSearchParams(location.search);
+          const productIdFromQuery = params.get("productId");
+          if (productIdFromQuery) {
+            const selected = res.find(p => p.id === Number(productIdFromQuery));
+            if (selected) {
+              setForm(prev => ({
+                ...prev,
+                productId: productIdFromQuery,
+                price: selected.purchasePrice || ""
+              }));
+              initialProductSet.current = true;
+            }
+          }
+        }
+
       } catch (err) {
         console.error("Failed to load products", err);
         alert("មិនអាចទាញយកផលិតផលបានទេ");
       }
     })();
-  }, []);
+  }, [location.search]);
 
   // Handle form changes
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => {
-      const updated = { ...prev, [name]: value };
-      // if (name === "productId") {
-      //   const selected = products.find((p) => p.id === Number(value));
-      //   if (selected) updated.price = selected.purchasePrice;
-      // }
-      return updated;
-    });
+    const { name, value } = e.target; // Destructure name and value
 
-    // ✅ Update purchasePrice on productTable when user inputs price
+    setForm(prev => ({ ...prev, [name]: value }));
+
+    if (name === "productId") {
+      const selected = products.find(p => p.id === Number(value));
+      if (selected) {
+        setForm(prev => ({ ...prev, price: selected.purchasePrice || "" }));
+      }
+    }
+
     if (name === "price" && form.productId) {
-      setProducts((prev) =>
-        prev.map((p) =>
+      setProducts(prev =>
+        prev.map(p =>
           p.id === Number(form.productId)
             ? { ...p, purchasePrice: Number(value) }
             : p
@@ -57,10 +77,9 @@ export default function PurchaseAdd() {
     }
   };
 
-  
   // Add product to cart
   const handleAddToCart = () => {
-    const product = products.find((p) => p.id === Number(form.productId));
+    const product = products.find(p => p.id === Number(form.productId));
     if (!product || !form.quantity || !form.price) {
       alert("សូមបំពេញព័ត៌មានផលិតផល ចំនួន និងតម្លៃ មុនពេលបន្ថែមទៅកន្ត្រក!");
       return;
@@ -68,10 +87,9 @@ export default function PurchaseAdd() {
 
     const lineTotal = Number(form.quantity) * Number(form.price);
 
-    setCartItems((prev) => {
-      const existingIndex = prev.findIndex((i) => i.product.id === product.id);
+    setCartItems(prev => {
+      const existingIndex = prev.findIndex(i => i.product.id === product.id);
       if (existingIndex >= 0) {
-        // ✅ update quantity if product already exists
         const updated = [...prev];
         updated[existingIndex].quantity += Number(form.quantity);
         updated[existingIndex].lineTotal =
@@ -89,12 +107,11 @@ export default function PurchaseAdd() {
       ];
     });
 
-    // Reset quantity only
-    setForm((prev) => ({ ...prev, quantity: "" }));
+    setForm(prev => ({ ...prev, quantity: "" }));
   };
 
   const handleRemoveFromCart = (index) => {
-    setCartItems((prev) => prev.filter((_, i) => i !== index));
+    setCartItems(prev => prev.filter((_, i) => i !== index));
   };
 
   // Build purchase payload
@@ -109,7 +126,7 @@ export default function PurchaseAdd() {
       remark: form.remark,
       totalPrice,
       createdAt: combinedDateTime,
-      items: cartItems.map((i) => ({
+      items: cartItems.map(i => ({
         product: { id: i.product.id },
         quantity: i.quantity,
         price: i.price,
@@ -127,7 +144,6 @@ export default function PurchaseAdd() {
     setSaving(true);
     try {
       await createPurchase(buildPurchasePayload());
-      alert("ការទិញបានបញ្ចូលដោយជោគជ័យ!");
       navigate("/purchases");
     } catch (err) {
       console.error("Save failed", err);
@@ -176,7 +192,7 @@ export default function PurchaseAdd() {
         className="w-full border rounded px-3 py-2"
       >
         <option value="">ជ្រើសរើសផលិតផល</option>
-        {products.map((p) => (
+        {products.map(p => (
           <option key={p.id} value={p.id}>
             {p.name}
           </option>
@@ -269,7 +285,7 @@ export default function PurchaseAdd() {
           className={`px-4 py-2 rounded text-white ${cartItems.length === 0
             ? "bg-gray-400 cursor-not-allowed"
             : "bg-green-600 hover:bg-green-700"
-            }`}
+          }`}
         >
           {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
         </button>

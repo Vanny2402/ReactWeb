@@ -107,12 +107,12 @@ export default function PurchaseList() {
                     <span>{formatKhDate(p.createdAt)}</span>
                     <span>{p.supplier}</span>
                     <span className="space-x-2">
-                      <Link
+                      {/* <Link
                         to={`/purchases/edit/${p.id}`}
                         className="text-blue-600"
                       >
                         កែប្រែ
-                      </Link>
+                      </Link> */}
                       <button
                         onClick={() => handleDelete(p.id)}
                         className="text-red-600"

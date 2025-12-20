@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { FiLoader } from "react-icons/fi";
 import customerApi from "../../api/customerApi";
-// import paymentApi from "../../api/paymentApi";
-// import saleApi from "../../api/saleApi";
+import { format2Digit, formatKHR } from "../../utils/formatAmount";
 
 export default function CustomerDetails() {
   const { id } = useParams();
@@ -89,15 +88,20 @@ export default function CustomerDetails() {
         <div className="p-4 space-y-6">
 
           {/* HEADER */}
-          <div className="bg-indigo-700 rounded-xl p-3 flex items-center text-white">
+          <div className="bg-indigo-700 rounded-xl flex items-center text-white">
             <div className="flex-1">
-              <p className="font-semibold">{customer?.name}</p>
-              <p className="text-xs mt-1">
+              <p className="font-semibold pr-4 pt-2 pl-2">{customer?.name}</p>
+              <p className="text-xs mt-1 font-semibold pr-4 pb-2 pl-2">
                 លេខទូរស័ព្ទ : {customer?.phone}
               </p>
             </div>
             <p className="font-semibold">
-              ត្រូវបង់ ${formatAmount(customer?.totalDebt)}
+              <p className="font-semibold pr-4 pt-2 pl-1">
+                រៀល : ៛ {formatKHR((customer?.totalDebt || 0) * 4003)}
+              </p>
+              <p className="text-red-200 pr-1">
+                ដុល្លារ : $ {format2Digit(customer?.totalDebt)}
+              </p>
             </p>
           </div>
 
@@ -211,24 +215,12 @@ export default function CustomerDetails() {
             </div>
           )}
 
-          {/* CTA */}
-          {/* <button
-            onClick={() =>
-              activeTab === "payment"
-                ? navigate(`/payments/add/${customer?.id}`)
-                : navigate(`/sales/ProductSale?customerId=${customer?.id}`)
-            }
-            className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold mt-4"
-          >
-            {activeTab === "payment" ? "បង់ប្រាក់បន្ថែម" : "លក់បន្ថែម"}
-          </button> */}
-
           <button
             onClick={() =>
               activeTab === "payment"
                 ? navigate(`/payments/add/${customer?.id}`, {
                   state: {
-                    amount: customer?.totalDebt, // 👈 pass debt
+                    amount: customer?.totalDebt,
                   },
                 })
                 : navigate(`/sales/ProductSale?customerId=${customer?.id}`)

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/solid";
 import { FiLoader } from "react-icons/fi";
@@ -21,7 +21,6 @@ export default function ProductSale() {
   /* ================= STATE ================= */
   const [cartItems, setCartItems] = useState([]);
   const [customerLocked, setCustomerLocked] = useState(false);
-
   const [form, setForm] = useState({
     productId: defaultProductId,
     customerId: defaultCustomerId,
@@ -44,18 +43,40 @@ export default function ProductSale() {
 
   const loading = loadingProducts || loadingCustomers;
 
+  /* ================= AUTO-FILL DEFAULT PRODUCT ================= */
+  useEffect(() => {
+    if (!defaultProductId || products.length === 0) return;
+
+    const product = products.find(p => p.id === Number(defaultProductId));
+    if (product && form.price !== product.price) {
+      // defer to avoid React warning
+      requestAnimationFrame(() => {
+        setForm(prev => ({
+          ...prev,
+          productId: defaultProductId,
+          price: product.price,
+        }));
+      });
+    }
+  }, [defaultProductId, products]);
+
+  /* ================= SELECTED CUSTOMER ================= */
+  const selectedCustomer = customers.find(
+    c => c.id === Number(form.customerId)
+  );
+  const totalDebt = selectedCustomer?.totalDebt || 0;
+
   /* ================= FORM HANDLERS ================= */
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
   }, []);
 
   const handleProductChange = useCallback(
     (e) => {
       const value = e.target.value;
-      const product = products.find((p) => p.id === Number(value));
-
-      setForm((prev) => ({
+      const product = products.find(p => p.id === Number(value));
+      setForm(prev => ({
         ...prev,
         productId: value,
         price: product ? product.price : "",
@@ -66,25 +87,20 @@ export default function ProductSale() {
 
   /* ================= CART ================= */
   const handleAddToCart = () => {
-    if (!form.customerId)
-      return alert("សូមជ្រើសរើសអតិថិជន");
-
+    if (!form.customerId) return alert("សូមជ្រើសរើសអតិថិជន");
     if (!form.productId || !form.qty || !form.price)
       return alert("សូមបញ្ចូល ផលិតផល ចំនួន និង តម្លៃ!");
 
-    const product = products.find(
-      (p) => p.id === Number(form.productId)
-    );
+    const product = products.find(p => p.id === Number(form.productId));
     if (!product) return;
 
     const qty = Number(form.qty);
     if (product.stock === 0)
       return alert(`ផលិតផល "${product.name}" អស់ពីស្តុកហើយ!`);
-
     if (qty > product.stock)
       return alert(`ចំនួនស្តុកមានត្រឹមតែ ${product.stock}`);
 
-    setCartItems((prev) => [
+    setCartItems(prev => [
       ...prev,
       {
         product: { id: product.id, name: product.name },
@@ -95,11 +111,11 @@ export default function ProductSale() {
     ]);
 
     setCustomerLocked(true);
-    setForm((f) => ({ ...f, qty: "" }));
+    setForm(prev => ({ ...prev, qty: "" }));
   };
 
   const handleRemove = (index) => {
-    setCartItems((prev) => {
+    setCartItems(prev => {
       const next = prev.filter((_, i) => i !== index);
       if (next.length === 0) setCustomerLocked(false);
       return next;
@@ -118,16 +134,13 @@ export default function ProductSale() {
   /* ================= SAVE SALE ================= */
   const saveMutation = useMutation({
     mutationFn: saleApi.createSale,
-
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["sales", "current-month"],
-        refetchType: "active", // force refetch immediately
+        refetchType: "active",
       });
-
       navigate("/sales/list", { replace: true });
     },
-
     onError: (err) => {
       console.error(err);
       alert("បរាជ័យ");
@@ -135,32 +148,23 @@ export default function ProductSale() {
   });
 
   const handleSave = () => {
-    //No items in cart
-    if (cartItems.length === 0) {
-      alert("សូមបន្ថែមយ៉ាងហោចណាស់ ១ ផលិតផលទៅកន្ត្រក");
-      return;
-    }
-    //No customer
-    if (!form.customerId) {
-      alert("សូមជ្រើសរើសអតិថិជន");
-      return;
-    }
-    //invalid paid amount (optional safety)
-    if (Number(form.paidAmount || 0) < 0) {
-      alert("ទឹកប្រាក់បង់ មិនត្រឹមត្រូវ");
-      return;
-    }
+    if (cartItems.length === 0)
+      return alert("សូមបន្ថែមយ៉ាងហោចណាស់ ១ ផលិតផលទៅកន្ត្រក");
+    if (!form.customerId) return alert("សូមជ្រើសរើសអតិថិជន");
+    if (Number(form.paidAmount || 0) < 0) return alert("ទឹកប្រាក់បង់ មិនត្រឹមត្រូវ");
+    if (Number(form.paidAmount || 0) > totalDebt + total)
+      return alert("ទឹកប្រាក់បង់លើសពីបំណុល");
+
     saveMutation.mutate({
       customer: { id: Number(form.customerId) },
       paidAmount: Number(form.paidAmount || 0),
       remark: form.remark,
-      items: cartItems.map((i) => ({
+      items: cartItems.map(i => ({
         product: { id: i.product.id },
         qty: i.qty,
         price: i.price,
       })),
     });
-
   };
 
   /* ================= UI ================= */
@@ -183,7 +187,6 @@ export default function ProductSale() {
         disabled={customerLocked}
         options={customers}
       />
-
       <SelectRow
         label="ផលិតផល"
         name="productId"
@@ -191,10 +194,8 @@ export default function ProductSale() {
         onChange={handleProductChange}
         options={products}
       />
-
       <InputRow label="ចំនួន" name="qty" value={form.qty} onChange={handleChange} />
       <InputRow label="តម្លៃ" name="price" value={form.price} onChange={handleChange} />
-
       <button
         onClick={handleAddToCart}
         className="w-full flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded"
@@ -207,18 +208,8 @@ export default function ProductSale() {
         <CartTable items={cartItems} onRemove={handleRemove} total={total} debt={debt} />
       )}
 
-      <InputRow
-        label="ទឹកប្រាក់បង់"
-        name="paidAmount"
-        value={form.paidAmount}
-        onChange={handleChange}
-      />
-      <InputRow
-        label="ចំណាំ"
-        name="remark"
-        value={form.remark}
-        onChange={handleChange}
-      />
+      <InputRow label="ទឹកប្រាក់បង់" name="paidAmount" value={form.paidAmount} onChange={handleChange} />
+      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} />
 
       <button
         onClick={handleSave}
@@ -231,15 +222,14 @@ export default function ProductSale() {
   );
 }
 
-/* ================= REUSABLE ================= */
-
+/* ================= REUSABLE COMPONENTS ================= */
 function CustSelect({ label, options = [], ...props }) {
   return (
     <div className="flex gap-3">
       <label className="w-32">{label}</label>
       <select {...props} className="flex-1 border rounded px-3 py-2">
         <option value="">ជ្រើសរើស</option>
-        {options.map((o) => (
+        {options.map(o => (
           <option key={o.id} value={o.id}>
             {o.name}
           </option>
@@ -255,12 +245,8 @@ function SelectRow({ label, options = [], ...props }) {
       <label className="w-32">{label}</label>
       <select {...props} className="flex-1 border rounded px-3 py-2">
         <option value="">ជ្រើសរើស</option>
-        {options.map((o) => (
-          <option
-            key={o.id}
-            value={o.id}
-            style={{ color: o.stock === 0 ? "red" : "black" }}
-          >
+        {options.map(o => (
+          <option key={o.id} value={o.id} style={{ color: o.stock === 0 ? "red" : "black" }}>
             {o.name} ({o.stock})
           </option>
         ))}
@@ -298,10 +284,7 @@ function CartTable({ items, onRemove, total, debt }) {
             <td>{i.price}</td>
             <td>{i.lineTotal}</td>
             <td>
-              <button
-                onClick={() => onRemove(idx)}
-                className="text-red-600 hover:underline"
-              >
+              <button onClick={() => onRemove(idx)} className="text-red-600 hover:underline">
                 ❌
               </button>
             </td>
