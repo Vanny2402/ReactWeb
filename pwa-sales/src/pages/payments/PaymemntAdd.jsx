@@ -4,26 +4,9 @@ import customerApi from "../../api/customerApi";
 import paymentApi from "../../api/paymentApi";
 import "./PaymentList.css";
 import { useLocation } from "react-router-dom";
-import {formatDateForInput} from "../../utils/formatAmount";
+import { formatDateForInput } from "../../utils/formatAmount";
+import StarIcon from '@mui/icons-material/Star';
 
-
-
-// Utility: format date for datetime-local input
-// const formatDateForInput = (date) => {
-//   const options = {
-//     timeZone: "Asia/Phnom_Penh",
-//     year: "numeric",
-//     month: "2-digit",
-//     day: "2-digit",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//     hour12: false,
-//   };
-//   const parts = new Intl.DateTimeFormat("en-GB", options).formatToParts(date);
-//   const get = (type) => parts.find((p) => p.type === type).value;
-//   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
-// };
-// Reusable form group (label + input/select)
 const FormGroup = ({ label, children }) => (
   <div className="form-group">
     <label>{label}</label>
@@ -92,7 +75,7 @@ const PaymentAdd = () => {
     if (name === "amount") {
       if (Number(val) > totalDebt) {
         setError(`❌ ទឹកប្រាក់បង់មិនអាចលើស ${totalDebt} បានទេ!`);
-        val = totalDebt; 
+        val = totalDebt;
       } else {
         setError("");
       }
@@ -136,12 +119,17 @@ const PaymentAdd = () => {
     }
   };
 
-
   return (
     <div className="payment-add">
       <form onSubmit={handleSubmit} className="form-card">
         {error && <p className="error-text">{error}</p>}
-        <FormGroup label="អតិថិជន" >
+        <FormGroup
+          label={
+            <>
+              អតិថិជន  <StarIcon style={{ color: "red", fontSize: "0.6rem", verticalAlign: "middle" }} />
+            </>
+          }
+        >
           <select className="w-full border rounded-xl pl-4 pr-3 py-2"
             name="customerId"
             value={formData.customerId}
@@ -158,7 +146,14 @@ const PaymentAdd = () => {
           </select>
         </FormGroup>
 
-        <FormGroup label="ទឹកប្រាក់$">
+        <FormGroup
+
+          label={
+            <>
+              ទឹកប្រាក់$  <StarIcon style={{ color: "red", fontSize: "0.6rem", verticalAlign: "middle" }} />
+            </>
+          }
+        >
           <input className="w-full border rounded-xl pl-4 pr-3 py-2"
             type="number"
             name="amount"

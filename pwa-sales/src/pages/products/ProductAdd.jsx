@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProduct } from "../../api/productApi";
-
+import StarIcon from '@mui/icons-material/Star';
 export default function ProductAdd() {
   const nav = useNavigate();
 
@@ -45,6 +45,9 @@ export default function ProductAdd() {
       <h1 className="text-xl font-bold mb-4">បង្កើតផលិតផលថ្មី</h1>
 
       <form className="space-y-3" onSubmit={handleSave}>
+        <label className="block">
+          ឈ្មោះផលិតផល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
+        </label>
         <input
           type="text"
           placeholder="ឈ្មោះផលិតផល"
@@ -54,32 +57,10 @@ export default function ProductAdd() {
           required
         />
 
-        <input
-          type="text"
-          placeholder="តម្លៃទិញចូល"
-          className="w-full border px-4 py-3 rounded-xl"
-          value={purchasePrice}
-          onChange={(e) => setPriceIn(e.target.value)}
-          required
-        />
-        
-        <input
-          type="text"
-          placeholder="តម្លៃលក់ចេញ"
-          className="w-full border px-4 py-3 rounded-xl"
-          value={price}
-          onChange={(e) => setSalePrice(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="ពណ៌ផលិតផល"
-          className="w-full border px-4 py-3 rounded-xl"
-          value={productColor}
-          onChange={(e) => setProductColor(e.target.value)}
-        />
-
         {/* ✅ Dropdown for productType */}
+        <label className="block">
+          ប្រភេទផលិតផល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
+        </label>
         <select
           className="w-full border px-4 py-3 rounded-xl"
           value={productType}
@@ -87,15 +68,52 @@ export default function ProductAdd() {
           required
         >
           <option value=""> ជ្រើសរើសប្រភេទ </option>
-          
           <option value="ឡេ">ឡេ</option>
           <option value="សាប៊ួ">សាប៊ួ</option>
           <option value="ហ្វូម">ហ្វូម</option>
           <option value="ម្សៅ">ម្សៅ</option>
           <option value="ម៉ាស">ម៉ាស</option>
+          <option value="ម៉ាស">សេរ៉ូម</option>
+          <option value="ម៉ាស">ស្ក្រាប់</option>
           <option value="ផ្សេងៗ">ផ្សេងៗ</option>
         </select>
+        <label className="block">
+          តម្លៃទិញចូល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
+        </label>
+        <input
+          type="text"
+          placeholder="$ "
+          className="w-full border px-4 py-3 rounded-xl"
+          value={purchasePrice}
+          onChange={(e) => setPriceIn(e.target.value)}
+          required
+        />
 
+        <label className="block">
+          តម្លៃលក់ចេញ <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
+        </label>
+        <input
+          type="text"
+          placeholder="$ "
+          className="w-full border px-4 py-3 rounded-xl"
+          value={price}
+          onChange={(e) => setSalePrice(e.target.value)}
+          required
+        />
+
+        <label className="block">
+          ពណ៌ផលិតផល
+        </label>
+        <input
+          type="text"
+          placeholder="ពណ៌ផលិតផល"
+          className="w-full border px-4 py-3 rounded-xl"
+          value={productColor}
+          onChange={(e) => setProductColor(e.target.value)}
+        />
+        <label className="block">
+          ចំណាំ
+        </label>
         <input
           type="text"
           placeholder="ចំណាំ"

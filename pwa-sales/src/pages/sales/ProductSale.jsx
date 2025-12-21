@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/solid";
 import { FiLoader } from "react-icons/fi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
+import StarIcon from '@mui/icons-material/Star';
 import saleApi from "../../api/saleApi";
 import { getAllProducts } from "../../api/productApi";
 import { getAllCustomers } from "../../api/customerApi";
@@ -35,6 +35,12 @@ export default function ProductSale() {
     queryKey: ["products"],
     queryFn: getAllProducts,
   });
+
+  /* ================= SortProudct On Dropdown ================= */
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
 
   const { data: customers = [], isLoading: loadingCustomers } = useQuery({
     queryKey: ["customers"],
@@ -180,7 +186,7 @@ export default function ProductSale() {
   return (
     <div className="p-4 max-w-lg mx-auto space-y-4">
       <CustSelect
-        label="អតិថិជន"
+        label={<>អតិថិជន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
         name="customerId"
         value={form.customerId}
         onChange={handleChange}
@@ -188,14 +194,22 @@ export default function ProductSale() {
         options={customers}
       />
       <SelectRow
-        label="ផលិតផល"
+        label={<>ផលិតផល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
         name="productId"
         value={form.productId}
         onChange={handleProductChange}
-        options={products}
+        options={sortedProducts}
+      // options={products}
       />
-      <InputRow label="ចំនួន" name="qty" value={form.qty} onChange={handleChange} />
-      <InputRow label="តម្លៃ" name="price" value={form.price} onChange={handleChange} />
+      <InputRow
+        label={<>ចំនួន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
+        name="qty"
+        value={form.qty}
+        onChange={handleChange}
+        placeholder="1,2,3.."
+        required
+      />
+      <InputRow label={<>តម្លៃ $ <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>} name="price" value={form.price} onChange={handleChange} placeholder="$  " />
       <button
         onClick={handleAddToCart}
         className="w-full flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded"
@@ -208,8 +222,8 @@ export default function ProductSale() {
         <CartTable items={cartItems} onRemove={handleRemove} total={total} debt={debt} />
       )}
 
-      <InputRow label="ទឹកប្រាក់បង់" name="paidAmount" value={form.paidAmount} onChange={handleChange} />
-      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} />
+      <InputRow label="ទឹកប្រាក់បង់ $" name="paidAmount" value={form.paidAmount} onChange={handleChange} placeholder="$  " />
+      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} placeholder="ចំណាំ..  " />
 
       <button
         onClick={handleSave}

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCustomer } from "../../api/customerApi.js";
+import StarIcon from '@mui/icons-material/Star';
+
 
 export default function CustomerAdd() {
   const nav = useNavigate();
@@ -38,6 +40,9 @@ export default function CustomerAdd() {
       <h1 className="text-xl font-bold mb-4">បង្កើតអតិថិជន</h1>
 
       <form className="space-y-3" onSubmit={handleSave}>
+        <label className="block">
+          ឈ្មោះអតិថិជន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
+        </label>
         <input
           type="text"
           name="name"
@@ -48,19 +53,25 @@ export default function CustomerAdd() {
           required
         />
 
+        <label className="block">
+          លេខទូរស័ព្ទ
+        </label>
         <input
           type="text"
           name="phone"
-          placeholder="លេខទូរស័ព្ទ"
+          placeholder="078,...."
           className="w-full border px-4 py-3 rounded-xl"
           value={form.phone}
           onChange={handleChange}
         />
 
+        <label className="block">
+          ឈ្មោះគណនីហ្វេសបុក
+        </label>
         <input
           type="text"
           name="address"
-          placeholder="ហ្វេសបុក"
+          placeholder="ឈ្មោះគណនី.."
           className="w-full border px-4 py-3 rounded-xl"
           value={form.address}
           onChange={handleChange}
