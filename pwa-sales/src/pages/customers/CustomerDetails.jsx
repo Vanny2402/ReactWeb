@@ -195,7 +195,9 @@ export default function CustomerDetails() {
                       return (
                         <li key={s.id} className="flex justify-between">
                           <span>
-                            {date} (#{s.id}){s.remark}
+                            {date} (#{s.id})<span className="text-red-400 text-xs ml-1">
+                              {s.remark}
+                            </span>
                           </span>
                           <span>${formatAmount(s.totalPrice)}</span>
                         </li>
