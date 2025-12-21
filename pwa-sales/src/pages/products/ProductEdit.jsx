@@ -109,12 +109,14 @@ export default function ProductModify() {
             onChange={handleChange}
             required
           >
-            <option value=""> ជ្រើសរើស </option>
+            <option value=""> ជ្រើសរើសប្រភេទ </option>
             <option value="ឡេ">ឡេ</option>
             <option value="សាប៊ួ">សាប៊ួ</option>
             <option value="ហ្វូម">ហ្វូម</option>
             <option value="ម្សៅ">ម្សៅ</option>
             <option value="ម៉ាស">ម៉ាស</option>
+            <option value="ម៉ាស">សេរ៉ូម</option>
+            <option value="ម៉ាស">ស្ក្រាប់</option>
             <option value="ផ្សេងៗ">ផ្សេងៗ</option>
           </select>
         </div>
