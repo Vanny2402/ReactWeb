@@ -145,7 +145,6 @@ export default function CustomerDetails() {
                           year: "2-digit",
                         })
                         .replace(/\//g, "-");
-
                       return (
                         <li key={p.id} className="flex justify-between">
                           <span>
@@ -196,7 +195,7 @@ export default function CustomerDetails() {
                       return (
                         <li key={s.id} className="flex justify-between">
                           <span>
-                            {date} (#{s.id})
+                            {date} (#{s.id}){s.remark}
                           </span>
                           <span>${formatAmount(s.totalPrice)}</span>
                         </li>
