@@ -115,8 +115,13 @@ export default function ProductModify() {
             <option value="ហ្វូម">ហ្វូម</option>
             <option value="ម្សៅ">ម្សៅ</option>
             <option value="ម៉ាស">ម៉ាស</option>
-            <option value="ម៉ាស">សេរ៉ូម</option>
-            <option value="ម៉ាស">ស្ក្រាប់</option>
+            <option value="សេរ៉ូម">សេរ៉ូម</option>
+            <option value="ស្ក្រាប់">ស្ក្រាប់</option>
+            <option value="ស្ប៉ា">ស្ប៉ា</option>
+            <option value="ក្រែម">ក្រែម</option>
+            <option value="ប្រេង">ប្រេង</option>
+            <option value="ទឹកអនាម័យ">ទឹកអនាម័យ</option>
+            <option value="ទឹកអប់">ទឹកអប់</option>
             <option value="ផ្សេងៗ">ផ្សេងៗ</option>
           </select>
         </div>
