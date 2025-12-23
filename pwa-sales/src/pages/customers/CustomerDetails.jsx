@@ -182,7 +182,7 @@ export default function CustomerDetails() {
                 </div>
               ) : (
                 <>
-                  <ul className="text-sm space-y-2 mt-2">
+                  <ul className="text-sm space-y-1 mt-1">
                     {customerSales.map((s) => {
                       const date = new Date(s.createdAt)
                         .toLocaleDateString("en-GB", {
@@ -190,17 +190,21 @@ export default function CustomerDetails() {
                           month: "2-digit",
                           year: "2-digit",
                         })
-                        .replace(/\//g, "-");
+                        .replace(/\//g, ".");
 
                       return (
                         <li key={s.id} className="flex justify-between">
                           <span>
-                            {date} (#{s.id})<span className="text-red-400 text-xs ml-1">
-                              {s.remark}
+                            {date} ({s.id})
+                            <span className="text-red-400 text-xs ml-1">
+                              { s.items && s.items.length >0
+                                ? s.items.map((i) => i.productName).join("|")
+                                : s.remark}
                             </span>
                           </span>
                           <span>${formatAmount(s.totalPrice)}</span>
                         </li>
+
                       );
                     })}
                   </ul>
