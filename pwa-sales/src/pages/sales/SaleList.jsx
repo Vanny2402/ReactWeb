@@ -1,93 +1,104 @@
-import { useMemo, useState, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { format2Digit, formatKHR } from "../../utils/formatAmount";
+
 import saleApi from "../../api/saleApi";
 import PageShell from "../../components/PageShell";
 
 export default function SaleList() {
+  /* ================= CONSTANTS ================= */
+  const PAGE_SIZE = 15;
+  const today = new Date().toISOString().slice(0, 10);
+
+  /* ================= STATE ================= */
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  /* ================= FETCH SALES ================= */
+
+  /* ================= FETCH ================= */
   const {
-    data: sales = [],
+    data,
     isLoading,
     isError,
-    isFetching,  
+    isFetching,
   } = useQuery({
-    queryKey: ["sales", "current-month"],
-    queryFn: async () => {
-      const res = await saleApi.gesSaleCurrentMonthDto();
-      return res.data ?? res;
-    },
-    staleTime: 0,
-    refetchOnMount: "always",
+    queryKey: ["sales", startDate, endDate, page],
+    queryFn: () =>
+      saleApi
+        .getSalesByDate({
+          startDate,
+          endDate,
+          page,
+          size: PAGE_SIZE,
+        })
+        .then((res) => res.data),
+    keepPreviousData: true,
+    refetchOnMount: "always", // ⭐ ADD THIS LINE
   });
 
+  /* ================= DERIVED ================= */
+  const sales = useMemo(() => data?.content ?? [], [data]);
+  const totalPages = data?.totalPages ?? 0;
 
-  /* ================= DELETE SALE ================= */
-  const deleteMutation = useMutation({
-    mutationFn: (id) => saleApi.removeSale(id),
-
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({
-        queryKey: ["sales", "current-month"],
-      });
-
-      const previous = queryClient.getQueryData([
-        "sales",
-        "current-month",
-      ]);
-
-      queryClient.setQueryData(
-        ["sales", "current-month"],
-        (old = []) => old.filter((s) => s.id !== id)
-      );
-
-      return { previous };
-    },
-
-    onError: (_err, _id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(
-          ["sales", "current-month"],
-          context.previous
-        );
-      }
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["sales", "current-month"],
-      });
-    },
-  });
-
-/* ================= DERIVED DATA ================= */
-const totalAmount = useMemo(
-  () =>
-    sales.reduce(
-      (sum, s) => sum + Number(s.totalPrice || 0),
-      0
-    ),
-  [sales]
-);
-  /* ================= searchLogic ================= */
   const filteredSales = useMemo(() => {
     if (!search.trim()) return sales;
 
     const keyword = search.toLowerCase();
-
     return sales.filter((s) => {
-      return (
-        String(s.id).includes(keyword) ||
-        s.customerName?.toLowerCase().includes(keyword)
-      );
+      if (String(s.id).includes(keyword)) return true;
+      if (s.customer?.name?.toLowerCase().includes(keyword)) return true;
+      if (
+        s.items?.some((item) =>
+          item.productName?.toLowerCase().includes(keyword)
+        )
+      ) {
+        return true;
+      }
+      return false;
     });
   }, [sales, search]);
+
+
+  const totalAmount = useMemo(
+    () =>
+      filteredSales.reduce(
+        (sum, s) => sum + Number(s.totalPrice || 0),
+        0
+      ),
+    [filteredSales]
+  );
+
+
+  /* ================= EFFECTS ================= */
+useEffect(() => {
+  queryClient.prefetchQuery({
+    queryKey: ["sales", startDate, endDate, page + 1],
+    queryFn: () =>
+      saleApi.getSalesByDate({
+        startDate,
+        endDate,
+        page: page + 1,
+        size: PAGE_SIZE,
+      }).then(res => res.data),
+  });
+}, [page, startDate, endDate]);
+
+  /* ================= MUTATIONS ================= */
+  const deleteMutation = useMutation({
+    mutationFn: saleApi.removeSale,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["sales"],
+      });
+    },
+  });
 
   /* ================= HANDLERS ================= */
   const openSale = useCallback(
@@ -107,8 +118,8 @@ const totalAmount = useMemo(
   /* ================= STATES ================= */
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen text-gray-600">
-        <FiLoader className="animate-spin mr-2" size={30} />
+      <div className="flex justify-center items-center h-screen">
+        <FiLoader className="animate-spin mr-2" size={28} />
         កំពុងផ្ទុក...
       </div>
     );
@@ -121,102 +132,128 @@ const totalAmount = useMemo(
       </p>
     );
   }
+
   /* ================= UI ================= */
   return (
     <PageShell>
-      {/* 🔄 Delete overlay */}
+      {/* Fetch overlay */}
       {isFetching && (
-        <div className="absolute inset-0 bg-white/80 z-40 mt-3">
-          <div className="flex justify-center pt-20">
-            <FiLoader className="animate-spin text-gray-600" size={22} />
-            កំពុងផ្ទុក...
+        <div className="absolute inset-0 bg-white/70 z-40 flex justify-center pt-24">
+          <FiLoader className="animate-spin" size={22} />
+        </div>
+      )}
+
+      {/* Header + Date Filter */}
+      <div className="px-4 pt-4 border-b flex items-center gap-3">
+        {/* <h1 className="text-xl font-bold flex-1">
+          ប្រតិបត្តិការលក់
+        </h1> */}
+
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="border rounded-lg px-1 text-sm"
+        />
+
+        <span className="text-sm">→</span>
+
+        <input
+          type="date"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="border rounded-lg px-1 text-sm"
+        />
+      </div>
+      <div className="px-4 mt-2 space-y-2">
+        {/* Search + Total */}
+        <div className="flex items-center gap-2">
+          <input
+            className="flex-1 border rounded-xl px-3 py-1 text-sm h-8"
+            placeholder="ស្វែងរក..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <div className="px-5 py-1 rounded-2xl bg-indigo-600 text-white font-bold text-sm whitespace-nowrap">
+            <p>{format2Digit(totalAmount)} $</p>
+            <p>{formatKHR((totalAmount || 0) * 4003)} ៛</p>
+
           </div>
         </div>
-      )}
 
-      {deleteMutation.isPending && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      <div className="flex items-center justify-between px-4 pt-4">
-        <h1 className="text-lg font-bold">ប្រតិបត្តិការលក់</h1>
-      </div>
-
-      {/* Total card */}
-      <div className="px-2 mt-1">
-        <div className="rounded-xl bg-gradient-to-r from-indigo-500 to-purple-400 p-4 text-white shadow">
-          <p className="text-sm opacity-90">ការលក់សរុបខែនេះ</p>
-          <p className="text-1xl font-bold">
-            ${totalAmount.toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      {/* Sale list */}
-      <div className="px-4 mt-4 space-y-3 pb-28">
-        <input
-          className="w-full border rounded-xl pl-4 pr-3 py-2"
-          placeholder="ស្វែងរក..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
         {filteredSales.map((s) => (
           <div
             key={s.id}
             onClick={() => openSale(s.id)}
-            className="bg-white rounded-xl border p-3 flex items-center gap-3 hover:bg-gray-50 transition cursor-pointer"
+            className="bg-white rounded-2xl border p-4 flex justify-between cursor-pointer"
           >
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold">
-              {s.customerName?.substring(0, 2).toUpperCase()}
-            </div>
-            {/* Info */}
-
-            <div className="flex-1">
+            <div>
               <p className="font-semibold text-sm">
-                #{s.id}/ {s.customerName}
+                #{s.id} / {s.customer?.name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-400">
                 {new Date(s.createdAt).toLocaleString()}
               </p>
+
+              {s.items?.length > 0 ? (
+                <ul className="text-xs text-gray-500 mt-1">
+                  {s.items.map((item, idx) => (
+                    <li key={idx}>• {item.productName}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-xs italic text-gray-400">
+                  No items
+                </p>
+              )}
             </div>
 
-            {/* Amount */}
-            <p className="font-semibold text-indigo-600">
-              ${Number(s.totalPrice).toFixed(2)}
-            </p>
-
-            {/* Delete */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteSale(s.id);
-              }}
-              className="p-2 rounded hover:bg-gray-100"
-            >
-              <Trash2 size={18} className="text-red-500" />
-            </button>
+            <div className="text-right">
+              <p className="font-bold text-indigo-600">
+                ${Number(s.totalPrice).toFixed(2)}
+              </p>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteSale(s.id);
+                }}
+                className="mt-2 p-2 rounded-full hover:bg-red-50"
+              >
+                <Trash2 size={18} className="text-red-500" />
+              </button>
+            </div>
           </div>
         ))}
-
-
-        {filteredSales.length === 0 && (
-          <p className="text-center text-gray-500 text-sm">
-            មិនមានទិន្នន័យដែលត្រូវនឹងការស្វែងរកទេ
-          </p>
-        )}
-
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="fixed bottom-14 left-0 right-0 bg-white border-t py-3 flex justify-center gap-2">
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`w-9 h-9 rounded-full border text-sm ${page === i
+                  ? "bg-indigo-600 text-white"
+                  : "hover:bg-indigo-50"
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Floating add */}
       <button
         onClick={() => navigate("/sales/ProductSale")}
-        className="fixed bottom-20 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg hover:bg-indigo-700"
+        className="fixed bottom-20 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg"
       >
         <Plus size={28} />
       </button>
     </PageShell>
   );
 }
+
+// 012 50 88 95

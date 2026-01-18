@@ -5,8 +5,21 @@ export const getSaleById = (id) => api.get(`/sales/${id}`);
 export const updateSale = (id, data) => api.put(`/sales/${id}`, data);
 export const getAllSales = () => api.get("/sales");
 export const removeSale = (id) => api.delete(`/sales/${id}`);
-export const gesSaleCurrentMonth=() => api.get("/sales/current-month");
-export const gesSaleCurrentMonthDto=() => api.get("/sales/current-month-dto");
+
+
+/**
+ * ✅ IMPORTANT: send page & size as query params
+ */
+export const getSaleCurrentMonthWithItemDto = ({ page, size }) =>
+  api.get("/sales/current-month-dto/month", {
+    params: { page, size },
+  });
+
+export const getSalesByDate = ({ startDate, endDate, page, size }) =>
+  api.get("/sales/by-date", {
+    params: { startDate, endDate, page, size },
+  });
+
 
 const saleApi = {
   createSale,
@@ -14,8 +27,9 @@ const saleApi = {
   updateSale,
   getAllSales,
   removeSale,
-  gesSaleCurrentMonth,
-  gesSaleCurrentMonthDto,
+  getSaleCurrentMonthWithItemDto,
+  getSalesByDate,
 };
+///07462288
 
 export default saleApi;
