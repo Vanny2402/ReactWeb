@@ -4,14 +4,13 @@ import { FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format2Digit, formatKHR } from "../../utils/formatAmount";
-
 import saleApi from "../../api/saleApi";
 import PageShell from "../../components/PageShell";
 
 export default function SaleList() {
   /* ================= CONSTANTS ================= */
   const PAGE_SIZE = 15;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
   /* ================= STATE ================= */
   const [search, setSearch] = useState("");
@@ -23,12 +22,7 @@ export default function SaleList() {
   const queryClient = useQueryClient();
 
   /* ================= FETCH ================= */
-  const {
-    data,
-    isLoading,
-    isError,
-    isFetching,
-  } = useQuery({
+  const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ["sales", startDate, endDate, page],
     queryFn: () =>
       saleApi
@@ -40,64 +34,51 @@ export default function SaleList() {
         })
         .then((res) => res.data),
     keepPreviousData: true,
-    refetchOnMount: "always", // ⭐ ADD THIS LINE
+    refetchOnMount: "always",
   });
 
   /* ================= DERIVED ================= */
   const sales = useMemo(() => data?.content ?? [], [data]);
   const totalPages = data?.totalPages ?? 0;
 
+  // Filter search by Sale ID or Customer Name
   const filteredSales = useMemo(() => {
     if (!search.trim()) return sales;
 
-    const keyword = search.toLowerCase();
+    const keyword = search.trim().toLowerCase();
+
     return sales.filter((s) => {
       if (String(s.id).includes(keyword)) return true;
-      if (s.customer?.name?.toLowerCase().includes(keyword)) return true;
-      if (
-        s.items?.some((item) =>
-          item.productName?.toLowerCase().includes(keyword)
-        )
-      ) {
-        return true;
-      }
+      if (s.customerName?.toLowerCase().includes(keyword)) return true;
       return false;
     });
   }, [sales, search]);
 
-
   const totalAmount = useMemo(
-    () =>
-      filteredSales.reduce(
-        (sum, s) => sum + Number(s.totalPrice || 0),
-        0
-      ),
+    () => filteredSales.reduce((sum, s) => sum + Number(s.totalPrice || 0), 0),
     [filteredSales]
   );
 
-
-  /* ================= EFFECTS ================= */
-useEffect(() => {
-  queryClient.prefetchQuery({
-    queryKey: ["sales", startDate, endDate, page + 1],
-    queryFn: () =>
-      saleApi.getSalesByDate({
-        startDate,
-        endDate,
-        page: page + 1,
-        size: PAGE_SIZE,
-      }).then(res => res.data),
-  });
-}, [page, startDate, endDate]);
+  /* ================= PREFETCH NEXT PAGE ================= */
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["sales", startDate, endDate, page + 1],
+      queryFn: () =>
+        saleApi
+          .getSalesByDate({
+            startDate,
+            endDate,
+            page: page + 1,
+            size: PAGE_SIZE,
+          })
+          .then((res) => res.data),
+    });
+  }, [page, startDate, endDate, queryClient]);
 
   /* ================= MUTATIONS ================= */
   const deleteMutation = useMutation({
     mutationFn: saleApi.removeSale,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["sales"],
-      });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sales"] }),
   });
 
   /* ================= HANDLERS ================= */
@@ -115,7 +96,7 @@ useEffect(() => {
     [deleteMutation]
   );
 
-  /* ================= STATES ================= */
+  /* ================= LOADING / ERROR STATES ================= */
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -145,19 +126,13 @@ useEffect(() => {
 
       {/* Header + Date Filter */}
       <div className="px-4 pt-4 border-b flex items-center gap-3">
-        {/* <h1 className="text-xl font-bold flex-1">
-          ប្រតិបត្តិការលក់
-        </h1> */}
-
         <input
           type="date"
           value={startDate}
           onChange={(e) => setStartDate(e.target.value)}
           className="border rounded-lg px-1 text-sm"
         />
-
         <span className="text-sm">→</span>
-
         <input
           type="date"
           value={endDate}
@@ -165,6 +140,7 @@ useEffect(() => {
           className="border rounded-lg px-1 text-sm"
         />
       </div>
+
       <div className="px-4 mt-2 space-y-2">
         {/* Search + Total */}
         <div className="flex items-center gap-2">
@@ -178,10 +154,10 @@ useEffect(() => {
           <div className="px-5 py-1 rounded-2xl bg-indigo-600 text-white font-bold text-sm whitespace-nowrap">
             <p>{format2Digit(totalAmount)} $</p>
             <p>{formatKHR((totalAmount || 0) * 4003)} ៛</p>
-
           </div>
         </div>
 
+        {/* Sale List */}
         {filteredSales.map((s) => (
           <div
             key={s.id}
@@ -193,25 +169,23 @@ useEffect(() => {
                 #{s.id} / {s.customer?.name}
               </p>
               <p className="text-xs text-gray-400">
-                {new Date(s.createdAt).toLocaleString()}
+                {s.createdAt ? new Date(s.createdAt).toLocaleString() : "No Date"}
               </p>
 
               {s.items?.length > 0 ? (
                 <ul className="text-xs text-gray-500 mt-1">
                   {s.items.map((item, idx) => (
-                    <li key={idx}>• {item.productName}</li>
+                    <li key={idx}>• {item.product?.name || "Unnamed Item"}</li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs italic text-gray-400">
-                  No items
-                </p>
+                <p className="text-xs italic text-gray-400">No items</p>
               )}
             </div>
 
             <div className="text-right">
               <p className="font-bold text-indigo-600">
-                ${Number(s.totalPrice).toFixed(2)}
+                ${Number(s.totalPrice || 0).toFixed(2)}
               </p>
               <button
                 onClick={(e) => {
@@ -225,6 +199,7 @@ useEffect(() => {
             </div>
           </div>
         ))}
+
       </div>
 
       {/* Pagination */}
@@ -245,7 +220,7 @@ useEffect(() => {
         </div>
       )}
 
-      {/* Floating add */}
+      {/* Floating Add */}
       <button
         onClick={() => navigate("/sales/ProductSale")}
         className="fixed bottom-20 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg"
@@ -255,5 +230,3 @@ useEffect(() => {
     </PageShell>
   );
 }
-
-// 012 50 88 95
