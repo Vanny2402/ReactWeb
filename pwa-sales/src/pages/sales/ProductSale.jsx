@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "@heroicons/react/24/solid";
 import { FiLoader } from "react-icons/fi";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import StarIcon from '@mui/icons-material/Star';
+import StarIcon from "@mui/icons-material/Star";
 import saleApi from "../../api/saleApi";
 import { getAllProducts } from "../../api/productApi";
 import { getAllCustomers } from "../../api/customerApi";
@@ -21,6 +21,7 @@ export default function ProductSale() {
   /* ================= STATE ================= */
   const [cartItems, setCartItems] = useState([]);
   const [customerLocked, setCustomerLocked] = useState(false);
+
   const [form, setForm] = useState({
     productId: defaultProductId,
     customerId: defaultCustomerId,
@@ -36,12 +37,6 @@ export default function ProductSale() {
     queryFn: getAllProducts,
   });
 
-  /* ================= SortProudct On Dropdown ================= */
-  const sortedProducts = useMemo(() => {
-    return [...products].sort((a, b) => a.name.localeCompare(b.name));
-  }, [products]);
-
-
   const { data: customers = [], isLoading: loadingCustomers } = useQuery({
     queryKey: ["customers"],
     queryFn: getAllCustomers,
@@ -49,13 +44,17 @@ export default function ProductSale() {
 
   const loading = loadingProducts || loadingCustomers;
 
-  /* ================= AUTO-FILL DEFAULT PRODUCT ================= */
+  /* ================= SORT PRODUCTS ================= */
+  const sortedProducts = useMemo(() => {
+    return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  /* ================= AUTO-FILL PRODUCT ================= */
   useEffect(() => {
     if (!defaultProductId || products.length === 0) return;
 
     const product = products.find(p => p.id === Number(defaultProductId));
     if (product && form.price !== product.price) {
-      // defer to avoid React warning
       requestAnimationFrame(() => {
         setForm(prev => ({
           ...prev,
@@ -79,8 +78,7 @@ export default function ProductSale() {
   }, []);
 
   const handleProductChange = useCallback(
-    (e) => {
-      const value = e.target.value;
+    (value) => {
       const product = products.find(p => p.id === Number(value));
       setForm(prev => ({
         ...prev,
@@ -93,10 +91,14 @@ export default function ProductSale() {
 
   /* ================= CART ================= */
   const handleAddToCart = () => {
+
     if (!form.customerId) return alert("សូមជ្រើសរើសអតិថិជន");
     if (!form.productId || !form.qty || !form.price)
       return alert("សូមបញ្ចូល ផលិតផល ចំនួន និង តម្លៃ!");
 
+    if (!/^\d+$/.test(form.qty)) {
+      return alert("ចំនួន ត្រូវតែជាលេខប៉ុណ្ណោះ");
+  }    
     const product = products.find(p => p.id === Number(form.productId));
     if (!product) return;
 
@@ -137,33 +139,29 @@ export default function ProductSale() {
   const paid = Number(form.paidAmount || 0);
   const debt = total - paid;
 
-  /* ================= SAVE SALE ================= */
+  /* ================= SAVE ================= */
   const saveMutation = useMutation({
     mutationFn: saleApi.createSale,
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["sales", "current-month"],
-        refetchType: "active",
       });
       navigate("/sales/list", { replace: true });
     },
-    onError: (err) => {
-      console.error(err);
-      alert("បរាជ័យ");
-    },
+    onError: () => alert("បរាជ័យ"),
   });
 
   const handleSave = () => {
     if (cartItems.length === 0)
       return alert("សូមបន្ថែមយ៉ាងហោចណាស់ ១ ផលិតផលទៅកន្ត្រក");
     if (!form.customerId) return alert("សូមជ្រើសរើសអតិថិជន");
-    if (Number(form.paidAmount || 0) < 0) return alert("ទឹកប្រាក់បង់ មិនត្រឹមត្រូវ");
-    if (Number(form.paidAmount || 0) > totalDebt + total)
+    if (paid < 0) return alert("ទឹកប្រាក់បង់ មិនត្រឹមត្រូវ");
+    if (paid > totalDebt + total)
       return alert("ទឹកប្រាក់បង់លើសពីបំណុល");
 
     saveMutation.mutate({
       customer: { id: Number(form.customerId) },
-      paidAmount: Number(form.paidAmount || 0),
+      paidAmount: paid,
       remark: form.remark,
       items: cartItems.map(i => ({
         product: { id: i.product.id },
@@ -185,31 +183,27 @@ export default function ProductSale() {
 
   return (
     <div className="p-4 max-w-lg mx-auto space-y-4">
-      <CustSelect
-        label={<>អតិថិជន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
-        name="customerId"
-        value={form.customerId}
-        onChange={handleChange}
-        disabled={customerLocked}
+
+      <SearchCustomer
+        label={<>អតិថិជន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /></>}
         options={customers}
+        value={form.customerId}
+        disabled={customerLocked}
+        onChange={(value) =>
+          setForm(prev => ({ ...prev, customerId: value }))
+        }
       />
-      <SelectRow
-        label={<>ផលិតផល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
-        name="productId"
+
+      <SearchProduct
+        label={<>ផលិតផល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /></>}
+        options={sortedProducts}
         value={form.productId}
         onChange={handleProductChange}
-        options={sortedProducts}
-      // options={products}
       />
-      <InputRow
-        label={<>ចំនួន <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>}
-        name="qty"
-        value={form.qty}
-        onChange={handleChange}
-        placeholder="1,2,3.."
-        required
-      />
-      <InputRow label={<>តម្លៃ $ <StarIcon style={{ color: "red", fontSize: "0.7rem" }} /> </>} name="price" value={form.price} onChange={handleChange} placeholder="$  " />
+
+      <InputRow label="ចំនួន" name="qty" value={form.qty} onChange={handleChange} />
+      <InputRow label="តម្លៃ $" name="price" value={form.price} onChange={handleChange} />
+
       <button
         onClick={handleAddToCart}
         className="w-full flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded"
@@ -222,53 +216,130 @@ export default function ProductSale() {
         <CartTable items={cartItems} onRemove={handleRemove} total={total} debt={debt} />
       )}
 
-      <InputRow label="ទឹកប្រាក់បង់ $" name="paidAmount" value={form.paidAmount} onChange={handleChange} placeholder="$  " />
-      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} placeholder="ចំណាំ..  " />
+      <InputRow label="ទឹកប្រាក់បង់ $" name="paidAmount" value={form.paidAmount} onChange={handleChange} />
+      <InputRow label="ចំណាំ" name="remark" value={form.remark} onChange={handleChange} />
 
       <button
         onClick={handleSave}
         disabled={saveMutation.isPending}
-        className="w-full bg-green-600 text-white py-2 rounded disabled:opacity-50"
+        className="w-full bg-green-600 text-white py-2 rounded"
       >
-        {saveMutation.isPending ? "កំពុងរក្សាទុក..." : "យល់ព្រម​"}
+        {saveMutation.isPending ? "កំពុងរក្សាទុក..." : "យល់ព្រម"}
       </button>
     </div>
   );
 }
 
-/* ================= REUSABLE COMPONENTS ================= */
-function CustSelect({ label, options = [], ...props }) {
+/* ================= SEARCH CUSTOMER ================= */
+function SearchCustomer({ label, options, value, onChange, disabled }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const selected = options.find(o => o.id === Number(value));
+    if (selected) setSearch(selected.name);
+  }, [value, options]);
+
+  const filtered = options.filter(o =>
+    o.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div className="flex gap-3">
+    <SearchDropdown
+      label={label}
+      search={search}
+      setSearch={setSearch}
+      open={open}
+      setOpen={setOpen}
+      disabled={disabled}
+      options={filtered}
+      onSelect={(o) => onChange(o.id)}
+    />
+  );
+}
+
+/* ================= SEARCH PRODUCT ================= */
+function SearchProduct({ label, options, value, onChange }) {
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const selected = options.find(o => o.id === Number(value));
+    if (selected) setSearch(selected.name);
+  }, [value, options]);
+
+  const filtered = options.filter(o =>
+    o.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <SearchDropdown
+      label={label}
+      search={search}
+      setSearch={setSearch}
+      open={open}
+      setOpen={setOpen}
+      options={filtered}
+      renderItem={(o) => `${o.name} (${o.stock})`}
+      onSelect={(o) => onChange(o.id)}
+    />
+  );
+}
+
+/* ================= GENERIC SEARCH DROPDOWN ================= */
+function SearchDropdown({
+  label,
+  search,
+  setSearch,
+  open,
+  setOpen,
+  options,
+  onSelect,
+  renderItem,
+  disabled,
+}) {
+  return (
+    <div className="flex gap-3 relative">
       <label className="w-32">{label}</label>
-      <select {...props} className="flex-1 border rounded px-3 py-2">
-        <option value="">ជ្រើសរើស</option>
-        {options.map(o => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
+      <div className="flex-1 relative">
+        <input
+          value={search}
+          disabled={disabled}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          className="w-full border rounded px-3 py-2"
+          placeholder="ស្វែងរក..."
+        />
+        {open && search && (
+          <ul className="absolute z-10 w-full bg-white border rounded mt-1 max-h-60 overflow-y-auto shadow">
+            {options.length > 0 ? (
+              options.map(o => (
+                <li
+                  key={o.id}
+                  onClick={() => {
+                    onSelect(o);
+                    setSearch(o.name);
+                    setOpen(false);
+                  }}
+                  className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                >
+                  {renderItem ? renderItem(o) : o.name}
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-2 text-gray-400">មិនមានទិន្នន័យ</li>
+            )}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }
 
-function SelectRow({ label, options = [], ...props }) {
-  return (
-    <div className="flex gap-3">
-      <label className="w-32">{label}</label>
-      <select {...props} className="flex-1 border rounded px-3 py-2">
-        <option value="">ជ្រើសរើស</option>
-        {options.map(o => (
-          <option key={o.id} value={o.id} style={{ color: o.stock === 0 ? "red" : "black" }}>
-            {o.name} ({o.stock})
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
+/* ================= REUSABLE ================= */
 function InputRow({ label, ...props }) {
   return (
     <div className="flex gap-3">
@@ -298,19 +369,17 @@ function CartTable({ items, onRemove, total, debt }) {
             <td>{i.price}</td>
             <td>{i.lineTotal}</td>
             <td>
-              <button onClick={() => onRemove(idx)} className="text-red-600 hover:underline">
+              <button onClick={() => onRemove(idx)} className="text-red-600">
                 ❌
               </button>
             </td>
           </tr>
         ))}
-
-        <tr className="font-semibold bg-gray-50">
+        <tr className="bg-gray-50 font-semibold">
           <td colSpan="3" className="text-right pr-4">សរុប:</td>
           <td className="text-right pr-4 text-red-600">{total}</td>
           <td />
         </tr>
-
         <tr className="bg-gray-50">
           <td colSpan="3" className="text-right pr-4">ជំពាក់:</td>
           <td className="text-right pr-4 text-red-600">{debt}</td>

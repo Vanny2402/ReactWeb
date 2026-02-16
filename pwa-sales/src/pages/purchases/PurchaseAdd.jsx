@@ -8,6 +8,11 @@ export default function PurchaseAdd() {
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [saving, setSaving] = useState(false);
+
+  // ✅ Search states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const initialProductSet = useRef(false);
@@ -22,30 +27,33 @@ export default function PurchaseAdd() {
     purchaseTime: moment().tz("Asia/Phnom_Penh").format("HH:mm"),
   });
 
-  // Load products
+  // ================= LOAD PRODUCTS =================
   useEffect(() => {
     (async () => {
       try {
         const res = await getAllProducts();
         setProducts(res || []);
 
-        // Auto-select product if productId passed in query
         if (!initialProductSet.current) {
           const params = new URLSearchParams(location.search);
           const productIdFromQuery = params.get("productId");
+
           if (productIdFromQuery) {
-            const selected = res.find(p => p.id === Number(productIdFromQuery));
+            const selected = res.find(
+              p => p.id === Number(productIdFromQuery)
+            );
+
             if (selected) {
               setForm(prev => ({
                 ...prev,
                 productId: productIdFromQuery,
                 price: selected.purchasePrice || ""
               }));
+              setSearchTerm(selected.name);
               initialProductSet.current = true;
             }
           }
         }
-
       } catch (err) {
         console.error("Failed to load products", err);
         alert("មិនអាចទាញយកផលិតផលបានទេ");
@@ -53,16 +61,32 @@ export default function PurchaseAdd() {
     })();
   }, [location.search]);
 
-  // Handle form changes
-  const handleChange = (e) => {
-    const { name, value } = e.target; // Destructure name and value
+  // ================= CLOSE DROPDOWN =================
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".product-combobox")) {
+        setShowDropdown(false);
+      }
+    };
 
+    document.addEventListener("click", handleClickOutside);
+    return () =>
+      document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // ================= HANDLE CHANGE =================
+  const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
 
     if (name === "productId") {
       const selected = products.find(p => p.id === Number(value));
       if (selected) {
-        setForm(prev => ({ ...prev, price: selected.purchasePrice || "" }));
+        setForm(prev => ({
+          ...prev,
+          price: selected.purchasePrice || ""
+        }));
+        setSearchTerm(selected.name);
       }
     }
 
@@ -77,25 +101,38 @@ export default function PurchaseAdd() {
     }
   };
 
-  // Add product to cart
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ================= ADD TO CART =================
   const handleAddToCart = () => {
-    const product = products.find(p => p.id === Number(form.productId));
+    const product = products.find(
+      p => p.id === Number(form.productId)
+    );
+
     if (!product || !form.quantity || !form.price) {
       alert("សូមបំពេញព័ត៌មានផលិតផល ចំនួន និងតម្លៃ មុនពេលបន្ថែមទៅកន្ត្រក!");
       return;
     }
 
-    const lineTotal = Number(form.quantity) * Number(form.price);
+    const lineTotal =
+      Number(form.quantity) * Number(form.price);
 
     setCartItems(prev => {
-      const existingIndex = prev.findIndex(i => i.product.id === product.id);
+      const existingIndex = prev.findIndex(
+        i => i.product.id === product.id
+      );
+
       if (existingIndex >= 0) {
         const updated = [...prev];
         updated[existingIndex].quantity += Number(form.quantity);
         updated[existingIndex].lineTotal =
-          updated[existingIndex].quantity * updated[existingIndex].price;
+          updated[existingIndex].quantity *
+          updated[existingIndex].price;
         return updated;
       }
+
       return [
         ...prev,
         {
@@ -114,11 +151,19 @@ export default function PurchaseAdd() {
     setCartItems(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Build purchase payload
+  // ================= BUILD PAYLOAD =================
   const buildPurchasePayload = () => {
-    const totalPrice = cartItems.reduce((sum, i) => sum + i.lineTotal, 0);
+    const totalPrice = cartItems.reduce(
+      (sum, i) => sum + i.lineTotal,
+      0
+    );
+
     const combinedDateTime = moment
-      .tz(`${form.purchaseDate} ${form.purchaseTime}`, "YYYY-MM-DD HH:mm", "Asia/Phnom_Penh")
+      .tz(
+        `${form.purchaseDate} ${form.purchaseTime}`,
+        "YYYY-MM-DD HH:mm",
+        "Asia/Phnom_Penh"
+      )
       .format("YYYY-MM-DDTHH:mm:ssZ");
 
     return {
@@ -153,10 +198,15 @@ export default function PurchaseAdd() {
   };
 
   const formatCurrency = (value) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(value);
 
+  // ================= UI =================
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
+
       {/* Supplier */}
       <input
         name="supplier"
@@ -184,20 +234,48 @@ export default function PurchaseAdd() {
         />
       </div>
 
-      {/* Product Selection */}
-      <select
-        name="productId"
-        value={form.productId}
-        onChange={handleChange}
-        className="w-full border rounded px-3 py-2"
-      >
-        <option value="">ជ្រើសរើសផលិតផល</option>
-        {products.map(p => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      {/* SEARCHABLE PRODUCT */}
+      <div className="relative product-combobox">
+        <input
+          type="text"
+          placeholder="ស្វែងរកផលិតផល..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowDropdown(true);
+          }}
+          onFocus={() => setShowDropdown(true)}
+          className="w-full border rounded px-3 py-2"
+        />
+
+        {showDropdown && searchTerm && (
+          <ul className="absolute z-10 w-full bg-white border rounded mt-1 max-h-60 overflow-y-auto shadow">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map(p => (
+                <li
+                  key={p.id}
+                  onClick={() => {
+                    setForm(prev => ({
+                      ...prev,
+                      productId: p.id,
+                      price: p.purchasePrice || ""
+                    }));
+                    setSearchTerm(p.name);
+                    setShowDropdown(false);
+                  }}
+                  className="px-3 py-2 hover:bg-blue-100 cursor-pointer"
+                >
+                  {p.name}
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-2 text-gray-400">
+                មិនមានផលិតផល
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
 
       {/* Quantity & Price */}
       <div className="flex gap-4">
@@ -223,13 +301,13 @@ export default function PurchaseAdd() {
       <div className="text-right">
         <button
           onClick={handleAddToCart}
-          className="flex items-center gap-2 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
         >
-          <span>🛒</span> បន្ថែមទៅកន្ត្រក
+          🛒 បន្ថែមទៅកន្ត្រក
         </button>
       </div>
 
-      {/* Cart Table */}
+      {/* ================= CART TABLE ================= */}
       {cartItems.length > 0 && (
         <table className="w-full border mt-4">
           <thead>
@@ -251,7 +329,7 @@ export default function PurchaseAdd() {
                 <td className="border px-2 py-1 text-center">
                   <button
                     onClick={() => handleRemoveFromCart(idx)}
-                    className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition"
+                    className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
                   >
                     លុប
                   </button>
@@ -282,9 +360,10 @@ export default function PurchaseAdd() {
         <button
           onClick={handleSave}
           disabled={saving || cartItems.length === 0}
-          className={`px-4 py-2 rounded text-white ${cartItems.length === 0
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-green-600 hover:bg-green-700"
+          className={`px-4 py-2 rounded text-white ${
+            cartItems.length === 0
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-700"
           }`}
         >
           {saving ? "កំពុងរក្សាទុក..." : "រក្សាទុក"}
