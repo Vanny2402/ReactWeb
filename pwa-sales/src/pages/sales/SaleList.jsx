@@ -164,7 +164,7 @@ const totalPurchasePrice = useMemo(() => {
 
           <div className="px-5 py-1 rounded-2xl bg-indigo-600 text-white font-bold text-sm whitespace-nowrap">
             <p>សរុបការលក់ : {format2Digit(totalAmount)} $</p>
-            <p>ចំចេញសរុប : {format2Digit(totalAmount-totalPurchasePrice)} $</p>
+            <p>ចំណេញសរុប : {format2Digit(totalAmount-totalPurchasePrice)} $</p>
           </div>
         </div>
 
