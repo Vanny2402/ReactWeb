@@ -59,6 +59,17 @@ export default function SaleList() {
     [filteredSales]
   );
 
+const totalPurchasePrice = useMemo(() => {
+  return filteredSales.reduce((saleSum, sale) => {
+    const salePurchaseTotal = sale.items?.reduce((itemSum, item) => {
+      const purchasePrice = Number(item.product?.purchasePrice || 0);
+      const qty = Number(item.qty || 0);
+      return itemSum + purchasePrice * qty;
+    }, 0);
+
+    return saleSum + salePurchaseTotal;
+  }, 0);
+}, [filteredSales]);
   /* ================= PREFETCH NEXT PAGE ================= */
   useEffect(() => {
     queryClient.prefetchQuery({
@@ -152,8 +163,8 @@ export default function SaleList() {
           />
 
           <div className="px-5 py-1 rounded-2xl bg-indigo-600 text-white font-bold text-sm whitespace-nowrap">
-            <p>{format2Digit(totalAmount)} $</p>
-            <p>{formatKHR((totalAmount || 0) * 4003)} ៛</p>
+            <p>សរុបការលក់ : {format2Digit(totalAmount)} $</p>
+            <p>ចំចេញសរុប : {format2Digit(totalAmount-totalPurchasePrice)} $</p>
           </div>
         </div>
 
