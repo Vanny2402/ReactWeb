@@ -3,7 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format2Digit, formatKHR } from "../../utils/formatAmount";
+import { format2Digit } from "../../utils/formatAmount";
 import saleApi from "../../api/saleApi";
 import PageShell from "../../components/PageShell";
 
@@ -234,8 +234,7 @@ const totalPurchasePrice = useMemo(() => {
       {/* Floating Add */}
       <button
         onClick={() => navigate("/sales/ProductSale")}
-        className="fixed bottom-20 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg"
-      >
+       className="fixed bottom-28 right-16 bg-indigo-600 text-white rounded-full p-3">
         <Plus size={28} />
       </button>
     </PageShell>
