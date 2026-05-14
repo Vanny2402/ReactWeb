@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPurchase } from "../../api/purchaseApi.js";
 import { getAllProducts } from "../../api/productApi.js";
@@ -203,6 +203,11 @@ export default function PurchaseAdd() {
       currency: "USD",
     }).format(value);
 
+  const cartGrandTotal = useMemo(
+    () => cartItems.reduce((sum, i) => sum + i.lineTotal, 0),
+    [cartItems]
+  );
+
   // ================= UI =================
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-4">
@@ -336,6 +341,15 @@ export default function PurchaseAdd() {
                 </td>
               </tr>
             ))}
+            <tr className="bg-gray-50 font-semibold">
+              <td colSpan={3} className="border px-2 py-2 text-left">
+                សរុប:
+              </td>
+              <td className="border px-2 py-2 text-left">
+                {formatCurrency(cartGrandTotal)}
+              </td>
+              <td className="border px-2 py-1" />
+            </tr>
           </tbody>
         </table>
       )}

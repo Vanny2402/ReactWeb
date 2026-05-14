@@ -20,6 +20,11 @@ export const getSalesByDate = ({ startDate, endDate, page, size }) =>
     params: { startDate, endDate, page, size },
   });
 
+export const getSalesByDateSummary = ({ startDate, endDate }) =>
+  api.get("/sales/by-date/summary", {
+    params: { startDate, endDate },
+  });
+
 
 const saleApi = {
   createSale,
@@ -29,6 +34,7 @@ const saleApi = {
   removeSale,
   getSaleCurrentMonthWithItemDto,
   getSalesByDate,
+  getSalesByDateSummary,
 };
 ///07462288
 

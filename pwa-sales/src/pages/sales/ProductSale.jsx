@@ -7,6 +7,12 @@ import StarIcon from "@mui/icons-material/Star";
 import saleApi from "../../api/saleApi";
 import { getAllProducts } from "../../api/productApi";
 import { getAllCustomers } from "../../api/customerApi";
+import { format2Digit, formatUsdKhrLine } from "../../utils/formatAmount";
+import { formatUsdKhrSplit } from "../../utils/formatAmount";
+export const USD_TO_KHR_RATE = 4000;
+
+/** When this customer is selected, payment amount tracks invoice (cart) total. */
+const AUTO_FILL_PAYMENT_CUSTOMER_ID = 39;
 
 export default function ProductSale() {
   const navigate = useNavigate();
@@ -136,6 +142,14 @@ export default function ProductSale() {
     [cartItems]
   );
 
+  useEffect(() => {
+    if (Number(form.customerId) !== AUTO_FILL_PAYMENT_CUSTOMER_ID) return;
+    const nextPaid = total > 0 ? String(total) : "";
+    setForm((prev) =>
+      prev.paidAmount === nextPaid ? prev : { ...prev, paidAmount: nextPaid }
+    );
+  }, [form.customerId, total]);
+
   const paid = Number(form.paidAmount || 0);
   const debt = total - paid;
 
@@ -203,7 +217,9 @@ export default function ProductSale() {
 
       <InputRow label="ចំនួន" name="qty" value={form.qty} onChange={handleChange} />
       <InputRow label="តម្លៃ $" name="price" value={form.price} onChange={handleChange} />
-
+        <p className="text-xs text-red-600 pt-1 border-t border-gray-200">
+        អត្រាប្ដូរប្រាក់: 1$ = {USD_TO_KHR_RATE.toLocaleString()}៛
+        </p>
       <button
         onClick={handleAddToCart}
         className="w-full flex justify-center items-center gap-2 bg-blue-600 text-white py-2 rounded"
@@ -226,6 +242,8 @@ export default function ProductSale() {
       >
         {saveMutation.isPending ? "កំពុងរក្សាទុក..." : "យល់ព្រម"}
       </button>
+
+
     </div>
   );
 }
@@ -351,41 +369,98 @@ function InputRow({ label, ...props }) {
 
 function CartTable({ items, onRemove, total, debt }) {
   return (
-    <table className="w-full border">
-      <thead className="bg-gray-100">
-        <tr>
-          <th>ផលិតផល</th>
-          <th>ចំនួន</th>
-          <th>តម្លៃ</th>
-          <th>សរុប</th>
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {items.map((i, idx) => (
-          <tr key={idx}>
-            <td>{i.product.name}</td>
-            <td>{i.qty}</td>
-            <td>{i.price}</td>
-            <td>{i.lineTotal}</td>
-            <td>
-              <button onClick={() => onRemove(idx)} className="text-red-600">
-                ❌
-              </button>
+    <div className="w-full border rounded">
+      <table className="w-full text-[11px] border-collapse">
+
+        {/* HEADER */}
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="px-1 py-1 text-left w-[45%]">
+              ផលិតផល
+            </th>
+
+            <th className="px-1 py-1 text-center w-[12%]">
+              ចំនួន
+            </th>
+
+            <th className="px-1 py-1 text-right w-[18%]">
+              តម្លៃ
+            </th>
+
+            <th className="px-1 py-1 text-right w-[20%]">
+              សរុប
+            </th>
+
+            <th className="px-1 py-1 text-center w-[5%]">
+              ✕
+            </th>
+          </tr>
+        </thead>
+
+        {/* BODY */}
+        <tbody>
+          {items.map((i, idx) => (
+            <tr key={idx} className="border-t">
+
+              <td className="px-1 py-1 text-left break-words">
+                {i.product.name}
+              </td>
+
+              <td className="px-1 py-1 text-center">
+                {i.qty}
+              </td>
+
+              <td className="px-1 py-1 text-right whitespace-nowrap">
+                ${format2Digit(i.price)}
+              </td>
+
+              <td className="px-1 py-1 text-right whitespace-nowrap">
+                ${format2Digit(i.lineTotal)}
+              </td>
+
+              <td className="px-1 py-1 text-center">
+                <button
+                  onClick={() => onRemove(idx)}
+                  className="text-red-600"
+                >
+                  ❌
+                </button>
+              </td>
+            </tr>
+          ))}
+
+          {/* TOTAL */}
+          <tr className="bg-gray-50 border-t">
+            <td colSpan={5} className="px-1 py-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[12px]">
+                  សរុប
+                </span>
+
+                <span className="text-red-600 font-semibold whitespace-nowrap text-[12px]">
+                  {formatUsdKhrLine(total)}
+                </span>
+              </div>
             </td>
           </tr>
-        ))}
-        <tr className="bg-gray-50 font-semibold">
-          <td colSpan="3" className="text-right pr-4">សរុប:</td>
-          <td className="text-right pr-4 text-red-600">{total}</td>
-          <td />
-        </tr>
-        <tr className="bg-gray-50">
-          <td colSpan="3" className="text-right pr-4">ជំពាក់:</td>
-          <td className="text-right pr-4 text-red-600">{debt}</td>
-          <td />
-        </tr>
-      </tbody>
-    </table>
+
+          {/* DEBT */}
+          <tr className="bg-gray-50 border-t">
+            <td colSpan={5} className="px-1 py-1">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-[12px]">
+                  ជំពាក់
+                </span>
+
+                <span className="text-red-600 font-semibold whitespace-nowrap text-[12px]">
+                  {formatUsdKhrLine(debt)}
+                </span>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
   );
 }

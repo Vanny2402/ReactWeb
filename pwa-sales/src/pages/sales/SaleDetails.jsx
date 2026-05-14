@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import saleApi from "../../api/saleApi";
 import { FiLoader } from "react-icons/fi";
+import { formatUsdKhrLine, USD_TO_KHR_RATE } from "../../utils/formatAmount";
 
 export default function SaleDetails() {
   const { id } = useParams();
@@ -34,6 +35,10 @@ export default function SaleDetails() {
 
   if (!sale) return <p className="text-center text-red-500">Sale not found</p>;
 
+  const total = Number(sale.totalPrice ?? 0);
+  const paid = Number(sale.paidAmount ?? 0);
+  const debt = Number(sale.debt ?? 0);
+
   return (
     <div className="max-w-lg mx-auto p-4 space-y-4">
       <h2 className="text-xl font-bold text-blue-600">
@@ -47,18 +52,34 @@ export default function SaleDetails() {
         {sale.items?.map((item, idx) => (
           <li key={idx} className="flex justify-between border-b pb-1">
             <span className="ml-2">{item.product?.name}</span>
-            <span className="mr-5">{item.qty} × ${item.price} = ${item.lineTotal}</span>
+            <span className="mr-5">
+              {item.qty} × ${Number(item.price ?? 0).toFixed(2)} = $
+              {Number(item.lineTotal ?? 0).toFixed(2)}
+            </span>
           </li>
         ))}
 
-        <div className="border rounded p-3 bg-gray-50 space-y-2">
-          <p>ចំនួនទឹកប្រាក់សរុប : ${sale.totalPrice}</p>
-          <p>បានបង់: ${sale.paidAmount}</p>
-          <p>ជំពាក់: ${sale.debt}</p>
+        <div className="border rounded p-3 bg-gray-50 space-y-2 text-sm">
+          <p>
+            <span className="font-semibold">ចំនួនទឹកប្រាក់សរុប :</span>{" "}
+            {formatUsdKhrLine(total)}
+          </p>
+          <p>
+            <span className="font-semibold">បានបង់:</span>{" "}
+            {formatUsdKhrLine(paid)}
+          </p>
+          <p>
+            <span className="font-semibold">ជំពាក់:</span>{" "}
+            {formatUsdKhrLine(debt)}
+          </p>
+          <p className="text-xs text-gray-600 pt-1 border-t border-gray-200">
+            FX = {USD_TO_KHR_RATE} (1$ = {USD_TO_KHR_RATE.toLocaleString()} ៛)
+          </p>
         </div>
       </ul>
 
       <button
+        type="button"
         onClick={() => navigate(-1)}
         className="bg-gray-200 px-4 py-2 rounded"
       >

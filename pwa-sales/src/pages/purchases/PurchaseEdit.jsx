@@ -263,8 +263,8 @@ export default function PurchaseEdit() {
               ))}
               {/* Grand Total Row */}
               <tr className="bg-gray-50 font-semibold">
-                <td colSpan="3" className="text-right pr-2 md:pr-4">សរុប:</td>
-                <td className="border px-2 py-2 md:px-4 md:py-3">
+                <td colSpan="3" className="text-left pl-2 md:pr-4">សរុប:</td>
+                <td className="border px-2 py-2 md:px-4 md:py-3 text-left">
                   {formatCurrency(cartItems.reduce((sum, i) => sum + i.lineTotal, 0))}
                 </td>
                 <td></td>

@@ -1,11 +1,9 @@
 import { Link, NavLink } from "react-router-dom";
 import {
   FiX,
-  FiHome,
   FiShoppingCart,
-  FiSettings,
   FiShoppingBag,
-  FiLogOut,   // 👈 add logout icon
+  FiLogOut,
 } from "react-icons/fi";
 
 export default function SideMenu({ isOpen, onClose }) {
@@ -40,9 +38,15 @@ export default function SideMenu({ isOpen, onClose }) {
             ទិញចូល
           </NavLink>
 
-          <Link to="/sales/report" onClick={onClose} className={base}>
-            <FiShoppingCart size={18} /> ការលក់s
-          </Link>
+          <NavLink
+            to="/sales/list"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `${base} ${isActive ? "text-blue-600 font-semibold" : ""}`
+            }
+          >
+            <FiShoppingCart size={18} /> ការលក់
+          </NavLink>
 
           {/* Spacer pushes logout to bottom */}
           <div className="">

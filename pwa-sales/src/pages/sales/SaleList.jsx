@@ -3,14 +3,15 @@ import { Plus, Trash2 } from "lucide-react";
 import { FiLoader } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format2Digit } from "../../utils/formatAmount";
+
+import { formatUsdKhrLine } from "../../utils/formatAmount";
 import saleApi from "../../api/saleApi";
 import PageShell from "../../components/PageShell";
 
 export default function SaleList() {
   /* ================= CONSTANTS ================= */
   const PAGE_SIZE = 15;
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
 
   /* ================= STATE ================= */
   const [search, setSearch] = useState("");
@@ -21,93 +22,133 @@ export default function SaleList() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  /* ================= FETCH ================= */
-  const { data, isLoading, isError, isFetching } = useQuery({
+  /* ================= SALES QUERY ================= */
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+  } = useQuery({
     queryKey: ["sales", startDate, endDate, page],
-    queryFn: () =>
-      saleApi
-        .getSalesByDate({
-          startDate,
-          endDate,
-          page,
-          size: PAGE_SIZE,
-        })
-        .then((res) => res.data),
+    queryFn: async () => {
+      const res = await saleApi.getSalesByDate({
+        startDate,
+        endDate,
+        page,
+        size: PAGE_SIZE,
+      });
+
+      return res.data;
+    },
     keepPreviousData: true,
     refetchOnMount: "always",
   });
 
+  /* ================= SUMMARY QUERY ================= */
+  const {
+    data: summary,
+    isFetching: summaryFetching,
+    isError: summaryError,
+  } = useQuery({
+    queryKey: ["sales-summary", startDate, endDate],
+    queryFn: async () => {
+      const res = await saleApi.getSalesByDateSummary({
+        startDate,
+        endDate,
+      });
+
+      return res.data;
+    },
+    staleTime: 30_000,
+  });
+
+  /* ================= RESET PAGE ================= */
+  useEffect(() => {
+    setPage(0);
+  }, [startDate, endDate]);
+
+  /* ================= PREFETCH NEXT PAGE ================= */
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["sales", startDate, endDate, page + 1],
+      queryFn: async () => {
+        const res = await saleApi.getSalesByDate({
+          startDate,
+          endDate,
+          page: page + 1,
+          size: PAGE_SIZE,
+        });
+
+        return res.data;
+      },
+    });
+  }, [page, startDate, endDate, queryClient]);
+
   /* ================= DERIVED ================= */
   const sales = useMemo(() => data?.content ?? [], [data]);
+
   const totalPages = data?.totalPages ?? 0;
 
-  // Filter search by Sale ID or Customer Name
   const filteredSales = useMemo(() => {
     if (!search.trim()) return sales;
 
     const keyword = search.trim().toLowerCase();
 
     return sales.filter((s) => {
-      if (String(s.id).includes(keyword)) return true;
-      if (s.customerName?.toLowerCase().includes(keyword)) return true;
-      return false;
+      return (
+        String(s.id).includes(keyword) ||
+        s.customer?.name?.toLowerCase().includes(keyword) ||
+        s.customerName?.toLowerCase().includes(keyword)
+      );
     });
   }, [sales, search]);
 
-  const totalAmount = useMemo(
-    () => filteredSales.reduce((sum, s) => sum + Number(s.totalPrice || 0), 0),
-    [filteredSales]
+  /* ================= SUMMARY CALCULATION ================= */
+  const totalSalesAll = Number(summary?.totalSales ?? 0);
+
+  const totalPurchaseCostAll = Number(
+    summary?.totalPurchaseCost ?? 0
   );
 
-const totalPurchasePrice = useMemo(() => {
-  return filteredSales.reduce((saleSum, sale) => {
-    const salePurchaseTotal = sale.items?.reduce((itemSum, item) => {
-      const purchasePrice = Number(item.product?.purchasePrice || 0);
-      const qty = Number(item.qty || 0);
-      return itemSum + purchasePrice * qty;
-    }, 0);
+  // ចំណេញ = ការលក់សរុប - ថ្លៃដើមសរុប
+  const profitAll = totalSalesAll - totalPurchaseCostAll;
 
-    return saleSum + salePurchaseTotal;
-  }, 0);
-}, [filteredSales]);
-  /* ================= PREFETCH NEXT PAGE ================= */
-  useEffect(() => {
-    queryClient.prefetchQuery({
-      queryKey: ["sales", startDate, endDate, page + 1],
-      queryFn: () =>
-        saleApi
-          .getSalesByDate({
-            startDate,
-            endDate,
-            page: page + 1,
-            size: PAGE_SIZE,
-          })
-          .then((res) => res.data),
-    });
-  }, [page, startDate, endDate, queryClient]);
-
-  /* ================= MUTATIONS ================= */
+  /* ================= DELETE ================= */
   const deleteMutation = useMutation({
     mutationFn: saleApi.removeSale,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["sales"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["sales"],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ["sales-summary"],
+      });
+    },
   });
 
   /* ================= HANDLERS ================= */
   const openSale = useCallback(
-    (id) => navigate(`/sales/SaleDetails/${id}`),
+    (id) => {
+      navigate(`/sales/SaleDetails/${id}`);
+    },
     [navigate]
   );
 
   const deleteSale = useCallback(
     (id) => {
-      if (window.confirm("តើអ្នកពិតជាចង់លុបការលក់នេះមែនទេ?")) {
+      const confirmed = window.confirm(
+        "តើអ្នកពិតជាចង់លុបការលក់នេះមែនទេ?"
+      );
+
+      if (confirmed) {
         deleteMutation.mutate(id);
       }
     },
     [deleteMutation]
   );
 
-  /* ================= LOADING / ERROR STATES ================= */
+  /* ================= LOADING ================= */
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -117,6 +158,7 @@ const totalPurchasePrice = useMemo(() => {
     );
   }
 
+  /* ================= ERROR ================= */
   if (isError) {
     return (
       <p className="text-center text-red-500 mt-10">
@@ -128,14 +170,14 @@ const totalPurchasePrice = useMemo(() => {
   /* ================= UI ================= */
   return (
     <PageShell>
-      {/* Fetch overlay */}
+      {/* Loading Overlay */}
       {isFetching && (
         <div className="absolute inset-0 bg-white/70 z-40 flex justify-center pt-24">
           <FiLoader className="animate-spin" size={22} />
         </div>
       )}
 
-      {/* Header + Date Filter */}
+      {/* Date Filter */}
       <div className="px-4 pt-4 border-b flex items-center gap-3">
         <input
           type="date"
@@ -143,7 +185,9 @@ const totalPurchasePrice = useMemo(() => {
           onChange={(e) => setStartDate(e.target.value)}
           className="border rounded-lg px-1 text-sm"
         />
+
         <span className="text-sm">→</span>
+
         <input
           type="date"
           value={endDate}
@@ -153,7 +197,7 @@ const totalPurchasePrice = useMemo(() => {
       </div>
 
       <div className="px-4 mt-2 space-y-2">
-        {/* Search + Total */}
+        {/* Search + Summary */}
         <div className="flex items-center gap-2">
           <input
             className="flex-1 border rounded-xl px-3 py-1 text-sm h-8"
@@ -162,9 +206,22 @@ const totalPurchasePrice = useMemo(() => {
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <div className="px-5 py-1 rounded-2xl bg-indigo-600 text-white font-bold text-sm whitespace-nowrap">
-            <p>សរុបការលក់  : {format2Digit(totalAmount)} $</p>
-            <p>ចំណេញសរុប  : {format2Digit(totalAmount-totalPurchasePrice)} $</p>
+          <div className="px-3 py-2 rounded-2xl bg-indigo-600 text-white font-bold text-xs max-w-[13rem] text-left leading-snug">
+            <p className="font-bold">ការលក់ 
+              {summaryError
+                ? "មិនអាចគណនា"
+                : summaryFetching
+                ? "..."
+                :`$${totalSalesAll.toFixed(2)}`}
+            </p>
+
+            <p className="mt-2 font-bold">ចំណេញ
+              {summaryError
+                ? "—"
+                : summaryFetching
+                ? "..."
+                : `$${profitAll.toFixed(2)}`}
+            </p> 
           </div>
         </div>
 
@@ -179,18 +236,25 @@ const totalPurchasePrice = useMemo(() => {
               <p className="font-semibold text-sm">
                 #{s.id} / {s.customer?.name}
               </p>
+
               <p className="text-xs text-gray-400">
-                {s.createdAt ? new Date(s.createdAt).toLocaleString() : "No Date"}
+                {s.createdAt
+                  ? new Date(s.createdAt).toLocaleString()
+                  : "No Date"}
               </p>
 
               {s.items?.length > 0 ? (
                 <ul className="text-xs text-gray-500 mt-1">
                   {s.items.map((item, idx) => (
-                    <li key={idx}>• {item.product?.name || "Unnamed Item"}</li>
+                    <li key={idx}>
+                      • {item.product?.name || "Unnamed Item"}
+                    </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs italic text-gray-400">No items</p>
+                <p className="text-xs italic text-gray-400">
+                  No items
+                </p>
               )}
             </div>
 
@@ -198,6 +262,7 @@ const totalPurchasePrice = useMemo(() => {
               <p className="font-bold text-indigo-600">
                 ${Number(s.totalPrice || 0).toFixed(2)}
               </p>
+
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -205,12 +270,14 @@ const totalPurchasePrice = useMemo(() => {
                 }}
                 className="mt-2 p-2 rounded-full hover:bg-red-50"
               >
-                <Trash2 size={18} className="text-red-500" />
+                <Trash2
+                  size={18}
+                  className="text-red-500"
+                />
               </button>
             </div>
           </div>
         ))}
-
       </div>
 
       {/* Pagination */}
@@ -220,10 +287,11 @@ const totalPurchasePrice = useMemo(() => {
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`w-9 h-9 rounded-full border text-sm ${page === i
+              className={`w-9 h-9 rounded-full border text-sm ${
+                page === i
                   ? "bg-indigo-600 text-white"
                   : "hover:bg-indigo-50"
-                }`}
+              }`}
             >
               {i + 1}
             </button>
@@ -231,10 +299,11 @@ const totalPurchasePrice = useMemo(() => {
         </div>
       )}
 
-      {/* Floating Add */}
+      {/* Floating Add Button */}
       <button
         onClick={() => navigate("/sales/ProductSale")}
-       className="fixed bottom-28 right-16 bg-indigo-600 text-white rounded-full p-3">
+        className="fixed bottom-28 right-16 bg-indigo-600 text-white rounded-full p-3"
+      >
         <Plus size={28} />
       </button>
     </PageShell>

@@ -1,14 +1,32 @@
+/** Display rate: 1 USD = 4000 KHR (UI only). */
+export const USD_TO_KHR_RATE = 4000;
 export const format2Digit = (value) =>
   new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(Number(value || 0));
 
-  export const formatKHR = (value) =>
+export const khrFromUsd = (usd) =>
+  Math.round(Number(usd || 0) * USD_TO_KHR_RATE);
+
+export const formatKHR = (value) =>
   new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(Number(value || 0));
+
+/** One line: USD + KHR for labels and tables. */
+export const formatUsdKhrLine = (usd) => {
+  const u = Number(usd || 0);
+  return `$${format2Digit(u)} | ៛${formatKHR(khrFromUsd(u))}`;
+};
+
+export function formatUsdKhrSplit(amount) {
+  const usd = Number(amount || 0);
+  const khr = usd * 4000;
+
+  return { usd, khr };
+}
 
 
 export const formatDateForInput = (date) => {

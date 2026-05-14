@@ -20,7 +20,6 @@ import ProductEdit from "./pages/products/ProductEdit";
 // Sales
 import Sales from "./pages/Sales";
 import ProductSale from "./pages/sales/ProductSale";
-import SaleReportPage from "./pages/sales/SaleReport/SaleReportPage";
 import SaleList from "./pages/sales/SaleList";
 import SaleDetails from "./pages/sales/SaleDetails";
 
@@ -60,7 +59,6 @@ export default function App() {
   const salesRoutes = [
     { path: "sales", element: <Sales /> },
     { path: "sales/ProductSale", element: <ProductSale /> },
-    { path: "sales/report", element: <SaleReportPage /> },
     { path: "sales/list", element: <SaleList /> },
     { path: "sales/SaleDetails/:id", element: <SaleDetails /> },
   ];

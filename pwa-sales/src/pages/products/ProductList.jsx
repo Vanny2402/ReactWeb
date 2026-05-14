@@ -1,41 +1,33 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, Link } from "react-router-dom";
 import { FiPlus, FiEdit, FiLoader } from "react-icons/fi"; // ✅ added FiLoader
 import { getAllProducts } from "../../api/productApi.js";
 
 export default function ProductList() {
-  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
 
   const nav = useNavigate();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  async function fetchProducts() {
-    try {
-      const res = await getAllProducts();
-      setProducts(res); // <-- FIXED
-    } catch (err) {
-      console.error(err);
-      alert("មិនអាចទាញទិន្នន័យផលិតផលបានទេ!");
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  const {
+    data: products = [],
+    isLoading: loading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["products"],
+    queryFn: getAllProducts,
+    staleTime: 60_000,
+  });
 
   function handlePurchas(id) {
-      nav(`/purchases/add?productId=${id}`);
+    nav(`/purchases/add?productId=${id}`);
   }
   function handleEdit(id) {
-      nav(`/products/edit/${id}`);
+    nav(`/products/edit/${id}`);
   }
   function handleSale(id) {
     nav(`/sales/ProductSale?productId=${id}`);
-
   }
 
   // ✅ Filter by name OR type
@@ -43,6 +35,27 @@ export default function ProductList() {
     (p.name || "").toLowerCase().includes(search.toLowerCase()) ||
     (p.productType || "").toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-4 pb-24">
+        <div className="flex justify-center items-center py-10 text-gray-600">
+          <FiLoader className="animate-spin mr-2" size={22} />
+          កំពុងផ្ទុក...
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    console.error(error);
+    return (
+      <div className="p-4 pb-24">
+        <p className="text-red-600">មិនអាចទាញទិន្នន័យផលិតផលបានទេ!</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 pb-24">
       {/* ✅ Search Bar + Stock In/Out */}
@@ -78,26 +91,17 @@ export default function ProductList() {
         </div>
       </div>
 
-      {/* ✅ Loading State */}
-      {loading ? (
-        <div className="flex justify-center items-center py-10 text-gray-600">
-          <FiLoader className="animate-spin mr-2" size={22} />
-          កំពុងផ្ទុក...
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredProducts.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              Purchase={handlePurchas}
-              Sale={handleSale}
-              onEdit={handleEdit}         // NEW: pass edit handler
-
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {filteredProducts.map((p) => (
+          <ProductCard
+            key={p.id}
+            product={p}
+            Purchase={handlePurchas}
+            Sale={handleSale}
+            onEdit={handleEdit}
+          />
+        ))}
+      </div>
 
       {/* ✅ Floating Add Button */}
       <Link

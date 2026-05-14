@@ -1,14 +1,33 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef, useLayoutEffect } from "react";
 import { FiPlus, FiLoader, FiEdit } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getAllCustomers } from "../../api/customerApi";
+import { formatKHR, khrFromUsd } from "../../utils/formatAmount";
 
 export default function CustomerList() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const pendingScrollY = useRef(null);
 
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const lr = location.state?.listRestore;
+    if (!lr) return;
+    setSearch(lr.search ?? "");
+    pendingScrollY.current =
+      typeof lr.scrollY === "number" ? lr.scrollY : null;
+    navigate(".", { replace: true, state: null });
+  }, [location.state, navigate]);
+
+  useLayoutEffect(() => {
+    if (loading || pendingScrollY.current == null) return;
+    const y = pendingScrollY.current;
+    pendingScrollY.current = null;
+    window.scrollTo(0, y);
+  }, [loading, search, customers, location.pathname]);
 
   useEffect(() => {
     let mounted = true;
@@ -74,7 +93,15 @@ export default function CustomerList() {
             <div
               key={c.id}
               onClick={() =>
-                navigate(`/customers/${c.id}`, { state: c })
+                navigate(`/customers/${c.id}`, {
+                  state: {
+                    customer: c,
+                    listRestore: {
+                      search,
+                      scrollY: window.scrollY,
+                    },
+                  },
+                })
               }
               className="flex justify-between items-center bg-white p-4 rounded-xl shadow hover:shadow-md cursor-pointer"
             >
@@ -85,17 +112,26 @@ export default function CustomerList() {
               </div>
 
               <div className="flex items-center gap-3">
-                <p
-                  className={`font-bold ${
-                    c.totalDebt > 0 ? "text-red-600" : "text-green-600"
-                  }`}
-                >
-                  {formatCurrency(c.totalDebt)}
-                </p>
+                <div className="flex flex-col items-end gap-0.5">
+                  <p
+                    className={`font-bold ${
+                      c.totalDebt > 0 ? "text-red-600" : "text-green-600"
+                    }`}
+                  >
+                    {formatCurrency(c.totalDebt)}
+                  </p>
+                  <p
+                    className={`text-xs font-semibold ${
+                      c.totalDebt > 0 ? "text-red-500" : "text-green-600"
+                    }`}
+                  >
+                    ៛{formatKHR(khrFromUsd(c.totalDebt))}
+                  </p>
+                </div>
 
                 <FiEdit
                   size={20}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/customers/edit/${c.id}`);
