@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { createProduct } from "../../api/productApi";
 import StarIcon from '@mui/icons-material/Star';
+
+function parsePrice(value) {
+  const trimmed = String(value ?? "").trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed.replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
 export default function ProductAdd() {
   const nav = useNavigate();
+  const queryClient = useQueryClient();
 
   const [name, setName] = useState("");
   const [productColor, setProductColor] = useState("");
@@ -15,22 +25,30 @@ export default function ProductAdd() {
 
   async function handleSave(e) {
     e.preventDefault();
-    setLoading(true);
     if (!productType) {
       alert("សូមជ្រើសរើសប្រភេទទំនិញ!");
-      setLoading(false);
       return;
     }
+
+    const purchase = parsePrice(purchasePrice);
+    const sale = parsePrice(price);
+    if (purchase == null || sale == null) {
+      alert("សូមបញ្ចូលតម្លៃឱ្យបានត្រឹមត្រូវ (លេខប៉ុណ្ណោះ)");
+      return;
+    }
+
+    setLoading(true);
     try {
       await createProduct({
         name,
         productColor,
         productType,
         remark,
-        purchasePrice,
-        price,
+        purchasePrice: purchase,
+        price: sale,
       });
 
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
       nav("/products");
     } catch (err) {
       console.error(err);
@@ -86,8 +104,10 @@ export default function ProductAdd() {
           តម្លៃទិញចូល <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
         </label>
         <input
-          type="text"
-          placeholder="$ "
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
           className="w-full border px-4 py-3 rounded-xl"
           value={purchasePrice}
           onChange={(e) => setPriceIn(e.target.value)}
@@ -98,8 +118,10 @@ export default function ProductAdd() {
           តម្លៃលក់ចេញ <StarIcon style={{ color: "red", fontSize: "0.7rem" }} />
         </label>
         <input
-          type="text"
-          placeholder="$ "
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
           className="w-full border px-4 py-3 rounded-xl"
           value={price}
           onChange={(e) => setSalePrice(e.target.value)}
